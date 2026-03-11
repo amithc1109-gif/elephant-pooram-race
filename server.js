@@ -20,59 +20,83 @@ io.on("connection", (socket) => {
 
         if(players.length >= 10) return;
 
-        players.push({
+        let player = {
             id: socket.id,
             name: name,
             position: 0
-        });
+        };
+
+        players.push(player);
+
+        // First player becomes admin
+        if(admin === null){
+            admin = socket.id;
+            socket.emit("admin");
+        }
 
         io.emit("players", players);
     });
 
- socket.on("join", (name) => {
+    socket.on("move", () => {
 
-    if(players.length >= 10) return;
+        if(!raceStarted) return;
 
-    let player = {
-        id: socket.id,
-        name: name,
-        position: 0
-    };
+        let player = players.find(p => p.id === socket.id);
 
-    players.push(player);
+        if(player){
 
-    if(admin === null){
-        admin = socket.id;
-        socket.emit("admin");
-    }
+            player.position += 20;
 
-    io.emit("players", players);
+            if(player.position >= 900){
+
+                raceStarted = false;
+
+                io.emit("winner", player.name);
+            }
+
+            io.emit("positions", players);
+        }
+
+    });
+
+    socket.on("startRace", () => {
+
+        if(socket.id !== admin) return;
+
+        raceStarted = true;
+
+        players.forEach(p => p.position = 0);
+
+        io.emit("raceStarted");
+
+    });
+
+    socket.on("endRace", () => {
+
+        if(socket.id !== admin) return;
+
+        raceStarted = false;
+
+        io.emit("raceEnded");
+
+    });
+
+    socket.on("disconnect", () => {
+
+        players = players.filter(p => p.id !== socket.id);
+
+        if(socket.id === admin){
+            admin = players.length > 0 ? players[0].id : null;
+        }
+
+        io.emit("players", players);
+
+    });
+
 });
 
-socket.on("startRace", () => {
+const PORT = process.env.PORT || 3000;
 
-    if(socket.id !== admin) return;
-
-    raceStarted = true;
-
-    players.forEach(p => p.position = 0);
-
-    io.emit("raceStarted");
-
-});
-
-});
-
-socket.on("endRace", () => {
-
-    if(socket.id !== admin) return;
-
-    raceStarted = false;
-
-    io.emit("raceEnded");
-
-});
-
-server.listen(3000, () => {
-    console.log("Server running on port 3000");
+server.listen(PORT, () => {
+    console.log("Server running on port " + PORT);
 });
