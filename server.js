@@ -28,7 +28,7 @@ io.on("connection", (socket) => {
 
         players.push(player);
 
-        // First player becomes admin
+        // first player becomes admin
         if(admin === null){
             admin = socket.id;
             socket.emit("admin");
@@ -36,6 +36,7 @@ io.on("connection", (socket) => {
 
         io.emit("players", players);
     });
+
 
     socket.on("move", () => {
 
@@ -59,6 +60,7 @@ io.on("connection", (socket) => {
 
     });
 
+
     socket.on("startRace", () => {
 
         if(socket.id !== admin) return;
@@ -68,8 +70,8 @@ io.on("connection", (socket) => {
         players.forEach(p => p.position = 0);
 
         io.emit("raceStarted");
-
     });
+
 
     socket.on("endRace", () => {
 
@@ -78,8 +80,8 @@ io.on("connection", (socket) => {
         raceStarted = false;
 
         io.emit("raceEnded");
-
     });
+
 
     socket.on("disconnect", () => {
 
@@ -94,6 +96,7 @@ io.on("connection", (socket) => {
     });
 
 });
+
 
 const PORT = process.env.PORT || 3000;
 

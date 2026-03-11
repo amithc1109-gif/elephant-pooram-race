@@ -1,25 +1,105 @@
-<!DOCTYPE html>
-<html>
+const express = require("express");
+const http = require("http");
+const { Server } = require("socket.io");
 
-<head>
-<title>Elephant Race</title>
-<link rel="stylesheet" href="style.css">
-</head>
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server);
 
-<body>
+app.use(express.static("public"));
 
-<h2>Elephant Race</h2>
+let players = [];
+let admin = null;
+let raceStarted = false;
 
-<button onclick="run()">RUN 🐘</button>
+io.on("connection", (socket) => {
 
-<button id="adminBtn" onclick="start()" style="display:none;">ADMIN START</button>
-<div id="track"></div>
+    console.log("Player connected");
 
-<h1 id="winner"></h1>
+    socket.on("join", (name) => {
 
-<script src="/socket.io/socket.io.js"></script>
-<script src="game.js"></script>
+        if(players.length >= 10) return;
 
-</body>
+        let player = {
+            id: socket.id,
+            name: name,
+            position: 0
+        };
 
-</html>
+        players.push(player);
+
+        // first player becomes admin
+        if(admin === null){
+            admin = socket.id;
+            socket.emit("admin");
+        }
+
+        io.emit("players", players);
+    });
+
+
+    socket.on("move", () => {
+
+        if(!raceStarted) return;
+
+        let player = players.find(p => p.id === socket.id);
+
+        if(player){
+
+            player.position += 20;
+
+            if(player.position >= 900){
+
+                raceStarted = false;
+
+                io.emit("winner", player.name);
+            }
+
+            io.emit("positions", players);
+        }
+
+    });
+
+
+    socket.on("startRace", () => {
+
+        if(socket.id !== admin) return;
+
+        raceStarted = true;
+
+        players.forEach(p => p.position = 0);
+
+        io.emit("raceStarted");
+    });
+
+
+    socket.on("endRace", () => {
+
+        if(socket.id !== admin) return;
+
+        raceStarted = false;
+
+        io.emit("raceEnded");
+    });
+
+
+    socket.on("disconnect", () => {
+
+        players = players.filter(p => p.id !== socket.id);
+
+        if(socket.id === admin){
+            admin = players.length > 0 ? players[0].id : null;
+        }
+
+        io.emit("players", players);
+
+    });
+
+});
+
+
+const PORT = process.env.PORT || 3000;
+
+server.listen(PORT, () => {
+    console.log("Server running on port " + PORT);
+});

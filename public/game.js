@@ -3,26 +3,25 @@ const socket = io();
 let players = [];
 let isAdmin = false;
 
-/* get player name */
 const playerName = localStorage.getItem("playerName");
 
-/* join game */
 socket.emit("join", playerName);
 
 
 /* ADMIN EVENT */
+
 socket.on("admin", () => {
+
     isAdmin = true;
 
-    const btn = document.getElementById("adminBtn");
+    document.getElementById("adminBtn").style.display = "inline-block";
+    document.getElementById("endBtn").style.display = "inline-block";
 
-    if(btn){
-        btn.style.display = "inline-block";
-    }
 });
 
 
 /* PLAYER LIST */
+
 socket.on("players", (data)=>{
     players = data;
     draw();
@@ -30,39 +29,67 @@ socket.on("players", (data)=>{
 
 
 /* POSITION UPDATES */
+
 socket.on("positions",(data)=>{
     players = data;
     draw();
 });
 
 
-/* RACE STARTED */
+/* RACE START */
+
 socket.on("raceStarted",()=>{
     document.getElementById("winner").innerHTML = "Race Started!";
 });
 
 
+/* RACE END */
+
+socket.on("raceEnded",()=>{
+    document.getElementById("winner").innerHTML = "Race Ended";
+});
+
+
 /* WINNER */
+
 socket.on("winner",(name)=>{
     document.getElementById("winner").innerHTML = name + " WON THE RACE!";
 });
 
 
 /* RUN BUTTON */
+
 function run(){
+
     socket.emit("move");
+
 }
 
 
-/* ADMIN START */
+/* START RACE */
+
 function start(){
+
     if(isAdmin){
         socket.emit("startRace");
     }
+
+}
+
+
+/* END RACE */
+
+function endRace(){
+
+    if(isAdmin){
+        socket.emit("endRace");
+    }
+
 }
 
 
 /* DRAW TRACK */
+
 function draw(){
 
 let html = "";
