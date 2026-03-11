@@ -2,11 +2,14 @@ const socket = io();
 
 let players = [];
 let isAdmin = false;
+let isPlayer = false;
 
 const playerName = localStorage.getItem("playerName");
 
+/* JOIN GAME */
+
 socket.emit("join", playerName);
-let isPlayer = false;
+
 
 /* ADMIN EVENT */
 
@@ -19,20 +22,18 @@ socket.on("admin", () => {
     document.getElementById("resetBtn").style.display = "inline-block";
 
 });
-function resetRace(){
 
-    if(isAdmin){
-        socket.emit("resetRace");
-    }
 
-}
+/* PLAYER ROLE */
 
-/* PLAYER LIST */
+socket.on("player", () => {
 
-socket.on("players", (data)=>{
-    players = data;
-    draw();
+    isPlayer = true;
+
 });
+
+
+/* SPECTATOR ROLE */
 
 socket.on("spectator", () => {
 
@@ -43,6 +44,36 @@ socket.on("spectator", () => {
 
 });
 
+
+/* PLAYER LIST */
+
+socket.on("players", (data)=>{
+
+    players = data;
+
+    draw();
+
+    const spec = document.getElementById("spectators");
+
+    if(spec){
+        spec.innerHTML = "Players: " + players.length + " / 10";
+    }
+
+});
+
+
+/* POSITION UPDATES */
+
+socket.on("positions",(data)=>{
+
+    players = data;
+
+    draw();
+
+});
+
+
+/* COUNTDOWN */
 
 socket.on("countdown", () => {
 
@@ -66,40 +97,40 @@ document.getElementById("winner").innerHTML = "GO!";
 
 });
 
-socket.on("players", (data)=>{
-players = data;
-draw();
-
-document.getElementById("spectators").innerHTML =
-"Players: " + players.length + " / 10";
-
-});
-/* POSITION UPDATES */
-
-socket.on("positions",(data)=>{
-    players = data;
-    draw();
-});
-
 
 /* RACE START */
 
 socket.on("raceStarted",()=>{
+
     document.getElementById("winner").innerHTML = "Race Started!";
+
 });
 
 
 /* RACE END */
 
 socket.on("raceEnded",()=>{
+
     document.getElementById("winner").innerHTML = "Race Ended";
+
+});
+
+
+/* RACE RESET */
+
+socket.on("raceReset", ()=>{
+
+    document.getElementById("winner").innerHTML = "Race Reset";
+
 });
 
 
 /* WINNER */
 
 socket.on("winner",(name)=>{
+
     document.getElementById("winner").innerHTML = name + " WON THE RACE!";
+
 });
 
 
@@ -107,9 +138,11 @@ socket.on("winner",(name)=>{
 
 function run(){
 
-if(isPlayer){
-socket.emit("move");
-}
+    if(isPlayer){
+
+        socket.emit("move");
+
+    }
 
 }
 
@@ -119,7 +152,9 @@ socket.emit("move");
 function start(){
 
     if(isAdmin){
+
         socket.emit("startRace");
+
     }
 
 }
@@ -130,16 +165,27 @@ function start(){
 function endRace(){
 
     if(isAdmin){
+
         socket.emit("endRace");
+
     }
 
 }
 
-socket.on("raceReset", ()=>{
 
-    document.getElementById("winner").innerHTML = "Race Reset";
+/* RESET RACE */
 
-});
+function resetRace(){
+
+    if(isAdmin){
+
+        socket.emit("resetRace");
+
+    }
+
+}
+
+
 /* DRAW TRACK */
 
 function draw(){
@@ -167,4 +213,4 @@ html += `
 
 document.getElementById("track").innerHTML = html;
 
-}   
+}
