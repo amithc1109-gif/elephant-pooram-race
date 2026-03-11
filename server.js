@@ -73,14 +73,19 @@ io.on("connection", (socket) => {
     });
 
 
-    socket.on("endRace", () => {
+socket.on("resetRace", () => {
 
-        if(socket.id !== admin) return;
+    if(socket.id !== admin) return;
 
-        raceStarted = false;
+    raceStarted = false;
 
-        io.emit("raceEnded");
-    });
+    players.forEach(p => p.position = 0);
+
+    io.emit("positions", players);
+
+    io.emit("raceReset");
+
+});
 
 
     socket.on("disconnect", () => {

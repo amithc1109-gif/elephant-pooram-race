@@ -1,105 +1,35 @@
-const express = require("express");
-const http = require("http");
-const { Server } = require("socket.io");
+<!DOCTYPE html>
+<html>
 
-const app = express();
-const server = http.createServer(app);
-const io = new Server(server);
+<head>
 
-app.use(express.static("public"));
+<title>Elephant Pooram Race</title>
 
-let players = [];
-let admin = null;
-let raceStarted = false;
+<link rel="stylesheet" href="style.css">
 
-io.on("connection", (socket) => {
+</head>
 
-    console.log("Player connected");
+<body>
 
-    socket.on("join", (name) => {
+<h1>Elephant Race</h1>
 
-        if(players.length >= 10) return;
+<button onclick="run()">RUN 🐘</button>
 
-        let player = {
-            id: socket.id,
-            name: name,
-            position: 0
-        };
+<button id="adminBtn" onclick="start()" style="display:none;">
+START RACE
+</button>
 
-        players.push(player);
+<button id="resetBtn" onclick="resetRace()" style="display:none;">
+RESET RACE
+</button>
 
-        // first player becomes admin
-        if(admin === null){
-            admin = socket.id;
-            socket.emit("admin");
-        }
+<h2 id="winner"></h2>
 
-        io.emit("players", players);
-    });
+<div id="track"></div>
 
+<script src="/socket.io/socket.io.js"></script>
+<script src="game.js"></script>
 
-    socket.on("move", () => {
+</body>
 
-        if(!raceStarted) return;
-
-        let player = players.find(p => p.id === socket.id);
-
-        if(player){
-
-            player.position += 20;
-
-            if(player.position >= 900){
-
-                raceStarted = false;
-
-                io.emit("winner", player.name);
-            }
-
-            io.emit("positions", players);
-        }
-
-    });
-
-
-    socket.on("startRace", () => {
-
-        if(socket.id !== admin) return;
-
-        raceStarted = true;
-
-        players.forEach(p => p.position = 0);
-
-        io.emit("raceStarted");
-    });
-
-
-    socket.on("endRace", () => {
-
-        if(socket.id !== admin) return;
-
-        raceStarted = false;
-
-        io.emit("raceEnded");
-    });
-
-
-    socket.on("disconnect", () => {
-
-        players = players.filter(p => p.id !== socket.id);
-
-        if(socket.id === admin){
-            admin = players.length > 0 ? players[0].id : null;
-        }
-
-        io.emit("players", players);
-
-    });
-
-});
-
-
-const PORT = process.env.PORT || 3000;
-
-server.listen(PORT, () => {
-    console.log("Server running on port " + PORT);
-});
+</html>

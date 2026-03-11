@@ -16,9 +16,16 @@ socket.on("admin", () => {
 
     document.getElementById("adminBtn").style.display = "inline-block";
     document.getElementById("endBtn").style.display = "inline-block";
+    document.getElementById("resetBtn").style.display = "inline-block";
 
 });
+function resetRace(){
 
+    if(isAdmin){
+        socket.emit("resetRace");
+    }
+
+}
 
 /* PLAYER LIST */
 
@@ -87,7 +94,11 @@ function endRace(){
 
 }
 
+socket.on("raceReset", ()=>{
 
+    document.getElementById("winner").innerHTML = "Race Reset";
+
+});
 /* DRAW TRACK */
 
 function draw(){
@@ -115,4 +126,4 @@ html += `
 
 document.getElementById("track").innerHTML = html;
 
-}
+}   
