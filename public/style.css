@@ -6,6 +6,34 @@ padding:20px;
 background:white;
 }
 
+body{
+
+text-align:center;
+font-family:Arial;
+
+background: linear-gradient(
+90deg,
+#ffcc00,
+#ff5733,
+#ffcc00
+);
+
+background-size:200% 200%;
+
+}
+
+.title{
+
+font-size:48px;
+color:white;
+background:#8B0000;
+padding:20px;
+border-radius:10px;
+display:inline-block;
+margin-bottom:20px;
+
+}
+
 .lane{
 position:relative;
 height:60px;
@@ -32,6 +60,7 @@ background:red;
 
 .elephant{
 position:absolute;
-left:10px;
+left:0;
 font-size:40px;
+transition:left 0.1s linear;
 }

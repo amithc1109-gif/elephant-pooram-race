@@ -16,9 +16,9 @@ io.on("connection", (socket) => {
 
     console.log("Player connected");
 
-    socket.on("join", (name) => {
+socket.on("join", (name) => {
 
-        if(players.length >= 10) return;
+    if(players.length < 10){
 
         let player = {
             id: socket.id,
@@ -28,14 +28,22 @@ io.on("connection", (socket) => {
 
         players.push(player);
 
-        // first player becomes admin
         if(admin === null){
             admin = socket.id;
             socket.emit("admin");
         }
 
-        io.emit("players", players);
-    });
+        socket.emit("player");
+
+    } else {
+
+        socket.emit("spectator");
+
+    }
+
+    io.emit("players", players);
+
+});
 
 
     socket.on("move", () => {
@@ -61,17 +69,23 @@ io.on("connection", (socket) => {
     });
 
 
-    socket.on("startRace", () => {
+socket.on("startRace", () => {
 
-        if(socket.id !== admin) return;
+    if(socket.id !== admin) return;
+
+    io.emit("countdown");
+
+    setTimeout(()=>{
 
         raceStarted = true;
 
         players.forEach(p => p.position = 0);
 
         io.emit("raceStarted");
-    });
 
+    },3000);
+
+});
 
 socket.on("resetRace", () => {
 

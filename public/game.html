@@ -11,12 +11,18 @@
 
 <body>
 
-<h1>Elephant Race</h1>
+<h1 class="title">വടക്കേക്കര ആനയോട്ടം 🐘</h1>
 
-<button onclick="run()">RUN 🐘</button>
+
+<button id="runBtn" onclick="run()">RUN 🐘</button>
+
 
 <button id="adminBtn" onclick="start()" style="display:none;">
 START RACE
+</button>
+
+<button id="endBtn" onclick="endRace()" style="display:none;">
+END RACE
 </button>
 
 <button id="resetBtn" onclick="resetRace()" style="display:none;">
@@ -24,6 +30,8 @@ RESET RACE
 </button>
 
 <h2 id="winner"></h2>
+
+<h3 id="spectators"></h3>
 
 <div id="track"></div>
 

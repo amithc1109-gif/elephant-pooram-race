@@ -6,7 +6,7 @@ let isAdmin = false;
 const playerName = localStorage.getItem("playerName");
 
 socket.emit("join", playerName);
-
+let isPlayer = false;
 
 /* ADMIN EVENT */
 
@@ -34,7 +34,46 @@ socket.on("players", (data)=>{
     draw();
 });
 
+socket.on("spectator", () => {
 
+    document.getElementById("runBtn").style.display = "none";
+
+    document.getElementById("winner").innerHTML =
+    "👀 Spectator Mode - Watching Race";
+
+});
+
+
+socket.on("countdown", () => {
+
+let count = 3;
+
+let interval = setInterval(()=>{
+
+document.getElementById("winner").innerHTML = count;
+
+count--;
+
+if(count < 0){
+
+clearInterval(interval);
+
+document.getElementById("winner").innerHTML = "GO!";
+
+}
+
+},1000);
+
+});
+
+socket.on("players", (data)=>{
+players = data;
+draw();
+
+document.getElementById("spectators").innerHTML =
+"Players: " + players.length + " / 10";
+
+});
 /* POSITION UPDATES */
 
 socket.on("positions",(data)=>{
@@ -68,7 +107,9 @@ socket.on("winner",(name)=>{
 
 function run(){
 
-    socket.emit("move");
+if(isPlayer){
+socket.emit("move");
+}
 
 }
 
@@ -115,7 +156,7 @@ html += `
 
 <span>${p.name}</span>
 
-<div class="elephant" style="transform: translateX(${p.position}px);">
+<div class="elephant" style="left:${p.position}px;">
 🐘
 </div>
 
