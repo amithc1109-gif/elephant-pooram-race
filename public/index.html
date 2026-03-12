@@ -1,76 +1,61 @@
 <!DOCTYPE html>
 <html>
+
 <head>
+
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
 <title>വടക്കേക്കര ആനയോട്ടം</title>
+
 <link rel="stylesheet" href="style.css">
+
 </head>
 
 <body>
 
 <h1 class="title">വടക്കേക്കര ആനയോട്ടം 🐘</h1>
 
-<div id="teamSelect">
-<h2>Select Team</h2>
+<h2>Select Mode</h2>
 
-<button onclick="selectTeam('vadakkekara')">വടക്കേക്കര</button>
-<button onclick="selectTeam('kizhakkekara')">കിഴക്കേക്കര</button>
-</div>
+<button onclick="participant()">Participant</button>
 
-<div id="nameSelect" style="display:none;">
-<h2>Select Elephant</h2>
-<div id="nameList"></div>
-</div>
+<button onclick="spectator()">Spectator</button>
 
 <script>
 
-const teams = {
+function participant(){
 
-vadakkekara : [
-"മണ്ണന്തല അച്ചു",
-"പൊന്നുമഠത്തിൽ ലച്ചുകുട്ടി",
-"വടക്കേക്കര കൊമ്പൻ",
-"വടക്കേക്കര മണികണ്ഠൻ",
-"വടക്കേക്കര ഗജരാജൻ"
-],
+let pass = prompt("Enter Password");
 
-kizhakkekara : [
-"മനത്താനത്ത് മഗേഷ്",
-"കുന്നിൻച്ചരുവിൽ ജനീലിയ",
-"വള്ളികൊമ്പിൻ ജൂഡൻ",
-"കാക്കനാട് സോണി",
-"മല്ലപ്പള്ളി ആലുവാക്കൊമ്പൻ"
-]
+if(pass === "admin123"){
 
-};
+localStorage.setItem("role","admin");
 
-function selectTeam(team){
-
-localStorage.setItem("team",team);
-
-document.getElementById("teamSelect").style.display="none";
-document.getElementById("nameSelect").style.display="block";
-
-let container=document.getElementById("nameList");
-
-container.innerHTML="";
-
-teams[team].forEach(name=>{
-
-let btn=document.createElement("button");
-
-btn.innerText=name;
-
-btn.onclick=()=>{
-
-localStorage.setItem("playerName",name);
 window.location="game.html";
 
-};
+}
 
-container.appendChild(btn);
+else if(pass === "race123"){
 
-});
+localStorage.setItem("role","player");
+
+window.location="team.html";
+
+}
+
+else{
+
+alert("Wrong password");
+
+}
+
+}
+
+function spectator(){
+
+localStorage.setItem("role","spectator");
+
+window.location="game.html";
 
 }
 

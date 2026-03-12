@@ -9,21 +9,33 @@ const io = new Server(server);
 app.use(express.static("public"));
 
 let players = [];
-let admin = null;
+
 let raceStarted = false;
 
-io.on("connection", (socket) => {
+io.on("connection",(socket)=>{
 
-console.log("Player connected:", socket.id);
+console.log("Connected:",socket.id);
 
 
-/* PLAYER JOIN */
+/* JOIN */
 
 socket.on("join",(data)=>{
 
-const {name,team} = data;
+const {name,team,role} = data;
 
-if(players.length < 10){
+/* SPECTATOR */
+
+if(role === "spectator"){
+
+socket.emit("spectator");
+
+return;
+
+}
+
+/* PLAYER */
+
+if(role === "player" || role === "admin"){
 
 let player = {
 id: socket.id,
@@ -34,30 +46,19 @@ position: 0
 
 players.push(player);
 
-/* first player becomes admin */
-
-if(admin === null){
-admin = socket.id;
-socket.emit("admin");
-}
-
 socket.emit("player");
 
-}else{
-
-socket.emit("spectator");
-
 }
 
-io.emit("players", players);
-io.emit("positions", players);
+io.emit("players",players);
+io.emit("positions",players);
 
 });
 
 
-/* PLAYER MOVE */
+/* MOVE */
 
-socket.on("move", () => {
+socket.on("move",()=>{
 
 if(!raceStarted) return;
 
@@ -65,13 +66,10 @@ let player = players.find(p => p.id === socket.id);
 
 if(!player) return;
 
-/* normal movement */
-
 player.position += 25;
 
 
-/* SPECIAL LOGIC
-   "കുന്നിൻച്ചരുവിൽ ജനീലിയ" runs backward in the middle */
+/* SPECIAL ELEPHANT */
 
 if(
 player.name === "കുന്നിൻച്ചരുവിൽ ജനീലിയ" &&
@@ -82,7 +80,7 @@ player.position -= 40;
 }
 
 
-/* CHECK WINNER */
+/* WINNER */
 
 if(player.position >= 900){
 
@@ -95,28 +93,21 @@ team: player.team
 
 }
 
-/* update everyone */
 
-io.emit("positions", players);
+io.emit("positions",players);
 
 });
 
 
 /* START RACE */
 
-socket.on("startRace", () => {
-
-if(socket.id !== admin) return;
-
-/* reset positions */
+socket.on("startRace",()=>{
 
 players.forEach(p=>{
 p.position = 0;
 });
 
-io.emit("positions", players);
-
-/* countdown */
+io.emit("positions",players);
 
 io.emit("countdown");
 
@@ -131,11 +122,9 @@ io.emit("raceStarted");
 });
 
 
-/* RESET RACE */
+/* RESET */
 
-socket.on("resetRace", () => {
-
-if(socket.id !== admin) return;
+socket.on("resetRace",()=>{
 
 raceStarted = false;
 
@@ -143,57 +132,31 @@ players.forEach(p=>{
 p.position = 0;
 });
 
-io.emit("positions", players);
+io.emit("positions",players);
+
 io.emit("raceReset");
-
-});
-
-
-/* END RACE */
-
-socket.on("endRace", () => {
-
-if(socket.id !== admin) return;
-
-raceStarted = false;
-
-io.emit("raceEnded");
 
 });
 
 
 /* DISCONNECT */
 
-socket.on("disconnect", () => {
-
-console.log("Player disconnected:", socket.id);
+socket.on("disconnect",()=>{
 
 players = players.filter(p => p.id !== socket.id);
 
-/* reassign admin if needed */
-
-if(socket.id === admin){
-
-admin = players.length > 0 ? players[0].id : null;
-
-if(admin){
-io.to(admin).emit("admin");
-}
-
-}
-
-io.emit("players", players);
-io.emit("positions", players);
+io.emit("players",players);
+io.emit("positions",players);
 
 });
 
 });
 
-
-/* SERVER PORT (for Render hosting) */
 
 const PORT = process.env.PORT || 3000;
 
-server.listen(PORT, () => {
-console.log("Server running on port " + PORT);
+server.listen(PORT,()=>{
+
+console.log("Server running on",PORT);
+
 });

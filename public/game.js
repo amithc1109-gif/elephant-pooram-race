@@ -1,36 +1,45 @@
 const socket = io();
 
-let players=[];
-let isPlayer=false;
-let isAdmin=false;
+/* ROLE */
 
-let scoreV=0;
-let scoreK=0;
+const role = localStorage.getItem("role");
 
-const playerName=localStorage.getItem("playerName");
-const team=localStorage.getItem("team");
+/* PLAYER INFO */
 
-socket.emit("join",{name:playerName,team});
+const playerName = localStorage.getItem("playerName");
+const team = localStorage.getItem("team");
 
+let players = [];
 
-/* ADMIN */
+let isAdmin = false;
+let isPlayer = false;
 
-socket.on("admin",()=>{
+/* SCORE */
 
-isAdmin=true;
-
-adminBtn.style.display="inline-block";
-resetBtn.style.display="inline-block";
-
-});
+let scoreV = 0;
+let scoreK = 0;
 
 
-/* PLAYER ROLE */
+/* ROLE UI */
 
-socket.on("player",()=>{
+if(role === "spectator"){
+document.getElementById("runBtn").style.display = "none";
+}
 
-isPlayer=true;
+if(role === "admin"){
+isAdmin = true;
 
+document.getElementById("adminBtn").style.display = "inline-block";
+document.getElementById("resetBtn").style.display = "inline-block";
+}
+
+
+/* JOIN SERVER */
+
+socket.emit("join",{
+name:playerName,
+team:team,
+role:role
 });
 
 
@@ -38,7 +47,8 @@ isPlayer=true;
 
 socket.on("players",(data)=>{
 
-players=data;
+players = data;
+
 draw();
 
 });
@@ -48,7 +58,8 @@ draw();
 
 socket.on("positions",(data)=>{
 
-players=data;
+players = data;
+
 draw();
 
 });
@@ -58,27 +69,27 @@ draw();
 
 socket.on("countdown",()=>{
 
-let c=3;
+let c = 3;
 
-let interval=setInterval(()=>{
+let interval = setInterval(()=>{
 
-winner.innerHTML=c;
+document.getElementById("winner").innerHTML = c;
 
 c--;
 
-if(c<0){
+if(c < 0){
 
 clearInterval(interval);
 
-winner.innerHTML="GO!";
+document.getElementById("winner").innerHTML = "GO!";
 
-/* start sound */
+/* play start sound */
 
-let start=document.getElementById("startSound");
+let startSound = document.getElementById("startSound");
 
-if(start){
-start.currentTime=0;
-start.play();
+if(startSound){
+startSound.currentTime = 0;
+startSound.play();
 }
 
 }
@@ -92,28 +103,37 @@ start.play();
 
 socket.on("winner",(data)=>{
 
-winner.innerHTML=data.name+" WON!";
+document.getElementById("winner").innerHTML = data.name + " WON!";
 
-/* scoreboard */
 
-if(data.team==="vadakkekara"){
+/* SCOREBOARD */
+
+if(data.team === "vadakkekara"){
+
 scoreV++;
-document.getElementById("scoreV").innerText=scoreV;
+
+document.getElementById("scoreV").innerText = scoreV;
+
 }else{
+
 scoreK++;
-document.getElementById("scoreK").innerText=scoreK;
+
+document.getElementById("scoreK").innerText = scoreK;
+
 }
 
-/* win sound */
 
-let win=document.getElementById("winSound");
+/* WIN SOUND */
 
-if(win){
-win.currentTime=0;
-win.play();
+let winSound = document.getElementById("winSound");
+
+if(winSound){
+winSound.currentTime = 0;
+winSound.play();
 }
 
-/* fireworks */
+
+/* FIREWORKS */
 
 launchFireworks();
 
@@ -124,23 +144,23 @@ launchFireworks();
 
 socket.on("raceReset",()=>{
 
-winner.innerHTML="Race Reset";
+document.getElementById("winner").innerHTML = "Race Reset";
 
 });
 
 
-/* RUN */
+/* RUN BUTTON */
 
 function run(){
 
-if(isPlayer){
+if(role === "player"){
 socket.emit("move");
 }
 
 }
 
 
-/* START */
+/* START RACE */
 
 function start(){
 
@@ -166,23 +186,23 @@ socket.emit("resetRace");
 
 function draw(){
 
-let html="";
+let html = "";
 
 players.forEach(p=>{
 
-let pos=p.position;
+let pos = p.position;
 
-/* special backward behaviour */
+/* SPECIAL ELEPHANT */
 
 if(
-p.name==="കുന്നിൻച്ചരുവിൽ ജനീലിയ" &&
-pos>400 &&
-pos<600
+p.name === "കുന്നിൻച്ചരുവിൽ ജനീലിയ" &&
+pos > 400 &&
+pos < 600
 ){
-pos-=60;
+pos -= 60;
 }
 
-html+=`
+html += `
 
 <div class="lane">
 
@@ -199,7 +219,7 @@ html+=`
 
 });
 
-track.innerHTML=html;
+document.getElementById("track").innerHTML = html;
 
 }
 
@@ -208,14 +228,14 @@ track.innerHTML=html;
 
 function launchFireworks(){
 
-let canvas=document.getElementById("fireworks");
+let canvas = document.getElementById("fireworks");
 
-let ctx=canvas.getContext("2d");
+let ctx = canvas.getContext("2d");
 
-canvas.width=window.innerWidth;
-canvas.height=window.innerHeight;
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
-let particles=[];
+let particles = [];
 
 for(let i=0;i<120;i++){
 
@@ -229,18 +249,18 @@ color:"hsl("+Math.random()*360+",100%,50%)"
 
 }
 
-let frame=0;
+let frame = 0;
 
-let interval=setInterval(()=>{
+let interval = setInterval(()=>{
 
 ctx.clearRect(0,0,canvas.width,canvas.height);
 
 particles.forEach(p=>{
 
-p.x+=p.vx;
-p.y+=p.vy;
+p.x += p.vx;
+p.y += p.vy;
 
-ctx.fillStyle=p.color;
+ctx.fillStyle = p.color;
 
 ctx.beginPath();
 ctx.arc(p.x,p.y,4,0,Math.PI*2);
@@ -250,7 +270,7 @@ ctx.fill();
 
 frame++;
 
-if(frame>40){
+if(frame > 40){
 
 clearInterval(interval);
 ctx.clearRect(0,0,canvas.width,canvas.height);

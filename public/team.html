@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Select Team</title>
+
+<link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+
+<h1 class="title">Select Team</h1>
+
+<button onclick="selectTeam('vadakkekara')">വടക്കേക്കര</button>
+
+<button onclick="selectTeam('kizhakkekara')">കിഴക്കേക്കര</button>
+
+<script>
+
+const teams={
+
+vadakkekara:[
+"മണ്ണന്തല അച്ചു",
+"പൊന്നുമഠത്തിൽ ലച്ചുകുട്ടി",
+"വടക്കേക്കര കൊമ്പൻ",
+"വടക്കേക്കര മണികണ്ഠൻ",
+"വടക്കേക്കര ഗജരാജൻ"
+],
+
+kizhakkekara:[
+"മനത്താനത്ത് മഗേഷ്",
+"കുന്നിൻച്ചരുവിൽ ജനീലിയ",
+"വള്ളികൊമ്പിൻ ജൂഡൻ",
+"കാക്കനാട് സോണി",
+"മല്ലപ്പള്ളി ആലുവാക്കൊമ്പൻ"
+]
+
+};
+
+function selectTeam(team){
+
+localStorage.setItem("team",team);
+
+let name=prompt("Enter Elephant Name");
+
+localStorage.setItem("playerName",name);
+
+window.location="game.html";
+
+}
+
+</script>
+
+</body>
+</html>
