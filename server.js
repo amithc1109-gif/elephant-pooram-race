@@ -9,7 +9,6 @@ const io = new Server(server);
 app.use(express.static("public"));
 
 let players = [];
-
 let raceStarted = false;
 
 io.on("connection",(socket)=>{
@@ -23,19 +22,30 @@ socket.on("join",(data)=>{
 
 const {name,team,role} = data;
 
+
+/* ADMIN */
+
+if(role === "admin"){
+
+socket.emit("admin");
+return;
+
+}
+
+
 /* SPECTATOR */
 
 if(role === "spectator"){
 
 socket.emit("spectator");
-
 return;
 
 }
 
+
 /* PLAYER */
 
-if(role === "player" || role === "admin"){
+if(role === "player"){
 
 let player = {
 id: socket.id,
@@ -93,7 +103,6 @@ team: player.team
 
 }
 
-
 io.emit("positions",players);
 
 });
@@ -122,7 +131,7 @@ io.emit("raceStarted");
 });
 
 
-/* RESET */
+/* RESET RACE */
 
 socket.on("resetRace",()=>{
 

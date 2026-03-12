@@ -12,34 +12,37 @@ const team = localStorage.getItem("team");
 let players = [];
 
 let isAdmin = false;
-let isPlayer = false;
 
-/* SCORE */
+
+/* SCOREBOARD */
 
 let scoreV = 0;
 let scoreK = 0;
 
 
-/* ROLE UI */
+/* UI CONTROL */
 
 if(role === "spectator"){
 document.getElementById("runBtn").style.display = "none";
 }
 
 if(role === "admin"){
+
 isAdmin = true;
 
+document.getElementById("runBtn").style.display = "none";
 document.getElementById("adminBtn").style.display = "inline-block";
 document.getElementById("resetBtn").style.display = "inline-block";
+
 }
 
 
-/* JOIN SERVER */
+/* JOIN */
 
 socket.emit("join",{
-name:playerName,
-team:team,
-role:role
+name: playerName,
+team: team,
+role: role
 });
 
 
@@ -48,7 +51,6 @@ role:role
 socket.on("players",(data)=>{
 
 players = data;
-
 draw();
 
 });
@@ -59,7 +61,6 @@ draw();
 socket.on("positions",(data)=>{
 
 players = data;
-
 draw();
 
 });
@@ -83,7 +84,7 @@ clearInterval(interval);
 
 document.getElementById("winner").innerHTML = "GO!";
 
-/* play start sound */
+/* start chenda */
 
 let startSound = document.getElementById("startSound");
 
@@ -105,19 +106,16 @@ socket.on("winner",(data)=>{
 
 document.getElementById("winner").innerHTML = data.name + " WON!";
 
-
 /* SCOREBOARD */
 
 if(data.team === "vadakkekara"){
 
 scoreV++;
-
 document.getElementById("scoreV").innerText = scoreV;
 
 }else{
 
 scoreK++;
-
 document.getElementById("scoreK").innerText = scoreK;
 
 }
@@ -149,7 +147,7 @@ document.getElementById("winner").innerHTML = "Race Reset";
 });
 
 
-/* RUN BUTTON */
+/* RUN */
 
 function run(){
 
@@ -160,7 +158,7 @@ socket.emit("move");
 }
 
 
-/* START RACE */
+/* START */
 
 function start(){
 
