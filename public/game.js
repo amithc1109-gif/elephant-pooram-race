@@ -147,8 +147,7 @@ html+=`
 
 <span>${p.name}</span>
 
-<img class="elephant" src="elephant.png" style="left:${pos}px">
-
+<div class="elephant" style="left:${pos}px">🐘</div>
 </div>
 
 `;
