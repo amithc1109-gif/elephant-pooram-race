@@ -1,96 +1,134 @@
 body{
-
 text-align:center;
-font-family:Arial;
+font-family:Arial, sans-serif;
+margin:0;
+padding:10px;
 
-background:linear-gradient(90deg,#ffcc00,#ff5733,#ffcc00);
+background: linear-gradient(
+90deg,
+#ffcc00,
+#ff5733,
+#ffcc00
+);
 
+background-size:200% 200%;
 }
+
+/* TITLE */
 
 .title{
-
 font-size:40px;
-background:#8B0000;
 color:white;
+background:#8B0000;
 padding:15px;
 border-radius:10px;
-
+margin-bottom:15px;
 }
 
-#track{
+/* SCOREBOARD */
 
+#scoreboard{
+font-size:22px;
+margin-bottom:15px;
+}
+
+/* BUTTONS */
+
+button{
+font-size:20px;
+padding:15px 25px;
+margin:10px;
+border:none;
+border-radius:10px;
+background:#ff6b00;
+color:white;
+cursor:pointer;
+}
+
+button:hover{
+background:#ff8c1a;
+}
+
+/* TRACK */
+
+#track{
 width:95%;
 max-width:900px;
 margin:auto;
 background:white;
 padding:10px;
-border-radius:10px;
-
+border-radius:15px;
 }
+
+/* RACE LANES */
 
 .lane{
-
 position:relative;
-height:80px;
+height:100px;
 border-bottom:2px dashed gray;
-
 }
 
-.start{
+/* START LINE */
 
+.start{
 position:absolute;
 left:0;
 top:0;
 bottom:0;
 width:6px;
 background:green;
-
 }
 
-.finish{
+/* FINISH LINE */
 
+.finish{
 position:absolute;
 right:0;
 top:0;
 bottom:0;
 width:6px;
 background:red;
-
 }
+
+/* ELEPHANT */
 
 .elephant{
-
 position:absolute;
 top:10px;
-height:60px;
+font-size:60px;
 transform:scaleX(-1);
-
+transition:left 0.1s linear;
 }
 
-button{
-
-font-size:22px;
-padding:15px 25px;
-margin:10px;
-border-radius:10px;
-border:none;
-background:#ff6b00;
-color:white;
-
-}
-
-#scoreboard{
-
-font-size:24px;
-margin-bottom:15px;
-
-}
+/* FIREWORKS CANVAS */
 
 #fireworks{
-
 position:fixed;
 top:0;
 left:0;
 pointer-events:none;
+z-index:999;
+}
+
+/* MOBILE */
+
+@media (max-width:600px){
+
+.title{
+font-size:28px;
+}
+
+button{
+font-size:22px;
+padding:18px 30px;
+}
+
+.elephant{
+font-size:50px;
+}
+
+.lane{
+height:90px;
+}
 
 }
