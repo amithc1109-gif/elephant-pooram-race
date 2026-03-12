@@ -2,8 +2,6 @@ body{
 
 text-align:center;
 font-family:Arial;
-margin:0;
-padding:10px;
 
 background:linear-gradient(90deg,#ffcc00,#ff5733,#ffcc00);
 
@@ -33,7 +31,7 @@ border-radius:10px;
 .lane{
 
 position:relative;
-height:70px;
+height:80px;
 border-bottom:2px dashed gray;
 
 }
@@ -63,21 +61,36 @@ background:red;
 .elephant{
 
 position:absolute;
-left:0;
-font-size:42px;
-transform:scaleX(-1); /* makes elephant face finish line */
-transition:left 0.1s linear;
+top:10px;
+height:60px;
+transform:scaleX(-1);
 
 }
 
 button{
 
-font-size:20px;
+font-size:22px;
 padding:15px 25px;
 margin:10px;
-border:none;
 border-radius:10px;
+border:none;
 background:#ff6b00;
 color:white;
+
+}
+
+#scoreboard{
+
+font-size:24px;
+margin-bottom:15px;
+
+}
+
+#fireworks{
+
+position:fixed;
+top:0;
+left:0;
+pointer-events:none;
 
 }

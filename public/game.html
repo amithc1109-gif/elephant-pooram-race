@@ -2,30 +2,38 @@
 <html>
 
 <head>
-
 <meta name="viewport" content="width=device-width, initial-scale=1">
-
 <title>Elephant Race</title>
-
 <link rel="stylesheet" href="style.css">
-
 </head>
 
 <body>
 
 <h1 class="title">വടക്കേക്കര ആനയോട്ടം 🐘</h1>
 
+<div id="scoreboard">
+
+<h2>🏆 Scoreboard</h2>
+
+<div>
+വടക്കേക്കര: <span id="scoreV">0</span> |
+കിഴക്കേക്കര: <span id="scoreK">0</span>
+</div>
+
+</div>
+
 <h2 id="winner"></h2>
 
 <button id="runBtn" onclick="run()">RUN 🐘</button>
 
 <button id="adminBtn" onclick="start()" style="display:none;">START</button>
-
-<button id="endBtn" onclick="endRace()" style="display:none;">END</button>
-
 <button id="resetBtn" onclick="resetRace()" style="display:none;">RESET</button>
 
 <div id="track"></div>
+
+<canvas id="fireworks"></canvas>
+
+<audio id="chenda" src="chenda.mp3"></audio>
 
 <script src="/socket.io/socket.io.js"></script>
 <script src="game.js"></script>

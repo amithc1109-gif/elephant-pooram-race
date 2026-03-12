@@ -1,76 +1,55 @@
 const socket = io();
 
-let players = [];
-let isAdmin = false;
-let isPlayer = false;
+let players=[];
+let isPlayer=false;
+let isAdmin=false;
 
-const playerName = localStorage.getItem("playerName");
+let scoreV=0;
+let scoreK=0;
 
-socket.emit("join", playerName);
+const name=localStorage.getItem("playerName");
+const team=localStorage.getItem("team");
+
+socket.emit("join",{name,team});
 
 
-/* ADMIN */
-
-socket.on("admin", ()=>{
+socket.on("admin",()=>{
 
 isAdmin=true;
-
 adminBtn.style.display="inline-block";
-endBtn.style.display="inline-block";
 resetBtn.style.display="inline-block";
 
 });
 
 
-/* PLAYER ROLE */
-
-socket.on("player", ()=>{
+socket.on("player",()=>{
 
 isPlayer=true;
 
 });
 
 
-/* SPECTATOR */
-
-socket.on("spectator", ()=>{
-
-runBtn.style.display="none";
-
-winner.innerHTML="👀 Spectator Mode";
-
-});
-
-
-/* PLAYER LIST */
-
 socket.on("players",(data)=>{
 
 players=data;
-
 draw();
 
 });
 
-
-/* POSITIONS */
 
 socket.on("positions",(data)=>{
 
 players=data;
-
 draw();
 
 });
 
 
-/* COUNTDOWN */
-
-socket.on("countdown", ()=>{
+socket.on("countdown",()=>{
 
 let c=3;
 
-let interval=setInterval(()=>{
+let int=setInterval(()=>{
 
 winner.innerHTML=c;
 
@@ -78,9 +57,10 @@ c--;
 
 if(c<0){
 
-clearInterval(interval);
-
+clearInterval(int);
 winner.innerHTML="GO!";
+
+document.getElementById("chenda").play();
 
 }
 
@@ -89,23 +69,24 @@ winner.innerHTML="GO!";
 });
 
 
-socket.on("raceStarted", ()=>{
+socket.on("winner",(data)=>{
 
-winner.innerHTML="Race Started!";
+winner.innerHTML=data.name+" WON!";
 
-});
+if(data.team==="vadakkekara"){
 
+scoreV++;
 
-socket.on("winner",(name)=>{
+scoreVEl.innerText=scoreV;
 
-winner.innerHTML=name+" WON THE RACE!";
+}else{
 
-});
+scoreK++;
+scoreKEl.innerText=scoreK;
 
+}
 
-socket.on("raceReset", ()=>{
-
-winner.innerHTML="Race Reset";
+launchFireworks();
 
 });
 
@@ -132,17 +113,6 @@ socket.emit("startRace");
 }
 
 
-function endRace(){
-
-if(isAdmin){
-
-socket.emit("endRace");
-
-}
-
-}
-
-
 function resetRace(){
 
 if(isAdmin){
@@ -160,11 +130,11 @@ let html="";
 
 players.forEach(p=>{
 
-let position=p.position;
+let pos=p.position;
 
-if(p.name==="കുന്നിൻച്ചരുവിൽ ജനീലിയ" && position>400 && position<600){
+if(p.name==="കുന്നിൻച്ചരുവിൽ ജനീലിയ" && pos>400 && pos<600){
 
-position-=50;   // runs backward in middle
+pos-=60;
 
 }
 
@@ -173,12 +143,11 @@ html+=`
 <div class="lane">
 
 <div class="start"></div>
-
 <div class="finish"></div>
 
 <span>${p.name}</span>
 
-<div class="elephant" style="left:${position}px;">🐘</div>
+<img class="elephant" src="elephant.png" style="left:${pos}px">
 
 </div>
 
@@ -187,5 +156,43 @@ html+=`
 });
 
 track.innerHTML=html;
+
+}
+
+
+/* FIREWORKS */
+
+function launchFireworks(){
+
+let canvas=document.getElementById("fireworks");
+
+let ctx=canvas.getContext("2d");
+
+canvas.width=window.innerWidth;
+canvas.height=window.innerHeight;
+
+for(let i=0;i<100;i++){
+
+ctx.fillStyle="hsl("+Math.random()*360+",100%,50%)";
+
+ctx.beginPath();
+
+ctx.arc(
+Math.random()*canvas.width,
+Math.random()*canvas.height,
+5,
+0,
+Math.PI*2
+);
+
+ctx.fill();
+
+}
+
+setTimeout(()=>{
+
+ctx.clearRect(0,0,canvas.width,canvas.height);
+
+},2000);
 
 }
