@@ -52,22 +52,24 @@ background:#ff8c1a;
 /* TRACK */
 
 #track{
-width:95%;
-max-width:900px;
-margin:auto;
-background:white;
+
+width:100%;
+overflow-x:auto;
+white-space:nowrap;
 padding:10px;
-border-radius:15px;
+
 }
 
 /* RACE LANES */
 
 .lane{
+
 position:relative;
 height:100px;
+min-width:900px;   /* important */
 border-bottom:2px dashed gray;
-}
 
+}
 /* START LINE */
 
 .start{

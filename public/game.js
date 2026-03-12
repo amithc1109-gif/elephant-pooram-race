@@ -278,3 +278,11 @@ ctx.clearRect(0,0,canvas.width,canvas.height);
 },30);
 
 }
+
+document.addEventListener("touchstart", () => {
+
+if(role === "player"){
+socket.emit("move");
+}
+
+});
