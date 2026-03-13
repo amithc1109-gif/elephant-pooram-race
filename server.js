@@ -10,96 +10,97 @@ app.use(express.static("public"));
 
 let players = [];
 let raceStarted = false;
+let finishOrder = [];
 
-io.on("connection",(socket)=>{
+const FINISH = 1500;
 
-console.log("Connected:",socket.id);
+io.on("connection", (socket) => {
 
+socket.on("join", (data) => {
 
-/* JOIN */
-
-socket.on("join",(data)=>{
-
-const {name,team,role} = data;
-
+const {name,team,pappan,role} = data;
 
 /* ADMIN */
 
 if(role === "admin"){
-
 socket.emit("admin");
 return;
-
 }
-
 
 /* SPECTATOR */
 
 if(role === "spectator"){
-
 socket.emit("spectator");
 return;
-
 }
 
+/* PREVENT DUPLICATE ELEPHANT */
 
-/* PLAYER */
+let exists = players.find(p=>p.name === name);
 
-if(role === "player"){
+if(exists){
+socket.emit("nameTaken");
+return;
+}
+
+/* ADD PLAYER */
 
 let player = {
 id: socket.id,
-name: name,
-team: team,
-position: 0
+name,
+team,
+pappan,
+position:0
 };
 
 players.push(player);
-
-socket.emit("player");
-
-}
 
 io.emit("players",players);
 io.emit("positions",players);
 
 });
 
-
 /* MOVE */
 
-socket.on("move",()=>{
+socket.on("move", () => {
 
 if(!raceStarted) return;
 
-let player = players.find(p => p.id === socket.id);
+let player = players.find(p=>p.id===socket.id);
 
 if(!player) return;
 
 player.position += 25;
 
-
 /* SPECIAL ELEPHANT */
 
 if(
-player.name === "കുന്നിൻച്ചരുവിൽ ജനീലിയ" &&
-player.position > 400 &&
-player.position < 600
+player.name==="കുന്നിൻച്ചരുവിൽ ജനീലിയ" &&
+player.position>600 &&
+player.position<800
 ){
 player.position -= 40;
 }
 
+/* FINISH */
 
-/* WINNER */
+if(player.position >= FINISH){
 
-if(player.position >= 900){
+player.position = FINISH;
+
+if(!finishOrder.find(p=>p.id===player.id)){
+finishOrder.push(player);
+}
+
+/* SEND TOP 3 */
+
+if(finishOrder.length === 3){
 
 raceStarted = false;
 
-io.emit("winner",{
-name: player.name,
-team: player.team
-});
+io.emit("top3",finishOrder);
+
+}
 
 }
 
@@ -107,14 +108,13 @@ io.emit("positions",players);
 
 });
 
-
-/* START RACE */
+/* START */
 
 socket.on("startRace",()=>{
 
-players.forEach(p=>{
-p.position = 0;
-});
+players.forEach(p=>p.position=0);
+
+finishOrder=[];
 
 io.emit("positions",players);
 
@@ -122,50 +122,25 @@ io.emit("countdown");
 
 setTimeout(()=>{
 
-raceStarted = true;
-
-io.emit("raceStarted");
+raceStarted=true;
 
 },3000);
 
 });
 
-
-/* RESET RACE */
+/* RESET */
 
 socket.on("resetRace",()=>{
 
-raceStarted = false;
+raceStarted=false;
 
-players.forEach(p=>{
-p.position = 0;
-});
+players.forEach(p=>p.position=0);
 
-io.emit("positions",players);
+finishOrder=[];
 
-io.emit("raceReset");
-
-});
-
-
-/* DISCONNECT */
-
-socket.on("disconnect",()=>{
-
-players = players.filter(p => p.id !== socket.id);
-
-io.emit("players",players);
 io.emit("positions",players);
 
 });
 
 });
-
-
-const PORT = process.env.PORT || 3000;
-
-server.listen(PORT,()=>{
-
-console.log("Server running on",PORT);
-
-});
+server.listen(process.env.PORT || 3000);

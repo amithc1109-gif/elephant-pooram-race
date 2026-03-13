@@ -1,97 +1,93 @@
 const socket = io();
 
-/* ROLE */
-
 const role = localStorage.getItem("role");
-
-/* PLAYER INFO */
-
 const playerName = localStorage.getItem("playerName");
 const team = localStorage.getItem("team");
+const pappan = localStorage.getItem("pappan");
 
-let players = [];
+let players=[];
+let canRun=false;
 
-let isAdmin = false;
+/* join */
 
+socket.emit("join",{name:playerName,team,pappan,role});
 
-/* SCOREBOARD */
+/* spectator betting */
 
-let scoreV = 0;
-let scoreK = 0;
-
-
-/* UI CONTROL */
-
-if(role === "spectator"){
-document.getElementById("runBtn").style.display = "none";
+if(role!=="spectator"){
+document.getElementById("betSection").style.display="none";
 }
 
-if(role === "admin"){
+/* admin controls */
 
-isAdmin = true;
-
-document.getElementById("runBtn").style.display = "none";
-document.getElementById("adminBtn").style.display = "inline-block";
-document.getElementById("resetBtn").style.display = "inline-block";
-
+if(role==="admin"){
+runBtn.style.display="none";
+adminBtn.style.display="inline-block";
+resetBtn.style.display="inline-block";
 }
 
-
-/* JOIN */
-
-socket.emit("join",{
-name: playerName,
-team: team,
-role: role
-});
-
-
-/* PLAYER LIST */
+/* players */
 
 socket.on("players",(data)=>{
 
-players = data;
+players=data;
+
 draw();
+
+/* betting options */
+
+if(role==="spectator"){
+
+let bet=document.getElementById("betChoice");
+
+bet.innerHTML="";
+
+players.forEach(p=>{
+
+let opt=document.createElement("option");
+
+opt.value=p.name;
+opt.text=p.name;
+
+bet.appendChild(opt);
 
 });
 
+}
 
-/* POSITION UPDATE */
+});
+
+/* movement */
 
 socket.on("positions",(data)=>{
 
-players = data;
+players=data;
+
 draw();
 
 });
 
-
-/* COUNTDOWN */
+/* countdown */
 
 socket.on("countdown",()=>{
 
-let c = 3;
+canRun=false;
 
-let interval = setInterval(()=>{
+let c=3;
 
-document.getElementById("winner").innerHTML = c;
+let timer=setInterval(()=>{
+
+winner.innerHTML=c;
 
 c--;
 
-if(c < 0){
+if(c<0){
 
-clearInterval(interval);
+clearInterval(timer);
 
-document.getElementById("winner").innerHTML = "GO!";
+winner.innerHTML="GO!";
 
-/* start chenda */
-
-let startSound = document.getElementById("startSound");
-
-if(startSound){
-startSound.currentTime = 0;
-startSound.play();
-}
+canRun=true;
 
 }
 
@@ -99,117 +95,67 @@ startSound.play();
 
 });
 
-
-/* WINNER */
-
-socket.on("winner",(data)=>{
-
-document.getElementById("winner").innerHTML = data.name + " WON!";
-
-/* SCOREBOARD */
-
-if(data.team === "vadakkekara"){
-
-scoreV++;
-document.getElementById("scoreV").innerText = scoreV;
-
-}else{
-
-scoreK++;
-document.getElementById("scoreK").innerText = scoreK;
-
-}
-
-
-/* WIN SOUND */
-
-let winSound = document.getElementById("winSound");
-
-if(winSound){
-winSound.currentTime = 0;
-winSound.play();
-}
-
-
-/* FIREWORKS */
-
-launchFireworks();
-
-});
-
-
-/* RESET */
-
-socket.on("raceReset",()=>{
-
-document.getElementById("winner").innerHTML = "Race Reset";
-
-});
-
-
-/* RUN */
+/* run */
 
 function run(){
 
-if(role === "player"){
+if(role==="player" && canRun){
+
 socket.emit("move");
-}
 
 }
 
+}
 
-/* START */
+/* admin */
 
 function start(){
 
-if(isAdmin){
 socket.emit("startRace");
-}
 
 }
-
-
-/* RESET */
 
 function resetRace(){
 
-if(isAdmin){
 socket.emit("resetRace");
-}
 
 }
 
+/* top3 */
 
-/* DRAW TRACK */
+socket.on("top3",(list)=>{
+
+let html="<h2>🏆 Results</h2>";
+
+html+=`🥇 ${list[0].name} - ${list[0].pappan}<br>`;
+html+=`🥈 ${list[1].name} - ${list[1].pappan}<br>`;
+html+=`🥉 ${list[2].name} - ${list[2].pappan}<br>`;
+
+winner.innerHTML=html;
+
+fireworks();
+
+});
+
+/* draw */
 
 function draw(){
 
-let html = "";
+let html="";
 
 players.forEach(p=>{
 
-let pos = p.position;
-
-/* SPECIAL ELEPHANT */
-
-if(
-p.name === "കുന്നിൻച്ചരുവിൽ ജനീലിയ" &&
-pos > 400 &&
-pos < 600
-){
-pos -= 60;
-}
-
-html += `
+html+=`
 
 <div class="lane">
 
 <div class="start"></div>
 <div class="finish"></div>
 
-<span>${p.name}</span>
+<span>${p.name}</span><br>
+<small>Pappan: ${p.pappan}</small>
 
-<div class="elephant" style="left:${pos}px;">🐘</div>
+<div class="elephant" style="left:${p.position}px;">🐘</div>
 
 </div>
 
@@ -217,72 +163,37 @@ html += `
 
 });
 
-document.getElementById("track").innerHTML = html;
+track.innerHTML=html;
 
 }
 
+/* fireworks */
 
-/* FIREWORKS */
+function fireworks(){
 
-function launchFireworks(){
+let canvas=document.getElementById("fireworks");
 
-let canvas = document.getElementById("fireworks");
+let ctx=canvas.getContext("2d");
 
-let ctx = canvas.getContext("2d");
+canvas.width=window.innerWidth;
+canvas.height=window.innerHeight;
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+for(let i=0;i<200;i++){
 
-let particles = [];
-
-for(let i=0;i<120;i++){
-
-particles.push({
-x:canvas.width/2,
-y:canvas.height/2,
-vx:(Math.random()-0.5)*10,
-vy:(Math.random()-0.5)*10,
-color:"hsl("+Math.random()*360+",100%,50%)"
-});
-
-}
-
-let frame = 0;
-
-let interval = setInterval(()=>{
-
-ctx.clearRect(0,0,canvas.width,canvas.height);
-
-particles.forEach(p=>{
-
-p.x += p.vx;
-p.y += p.vy;
-
-ctx.fillStyle = p.color;
+ctx.fillStyle=`hsl(${Math.random()*360},100%,50%)`;
 
 ctx.beginPath();
-ctx.arc(p.x,p.y,4,0,Math.PI*2);
+
+ctx.arc(Math.random()*canvas.width,Math.random()*canvas.height,5,0,Math.PI*2);
+
 ctx.fill();
 
-});
+}
 
-frame++;
+setTimeout(()=>{
 
-if(frame > 40){
-
-clearInterval(interval);
 ctx.clearRect(0,0,canvas.width,canvas.height);
 
-}
-
-},30);
+},2500);
 
 }
-
-document.addEventListener("touchstart", () => {
-
-if(role === "player"){
-socket.emit("move");
-}
-
-});

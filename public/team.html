@@ -2,17 +2,17 @@
 <html>
 
 <head>
-
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Select Team</title>
-
 <link rel="stylesheet" href="style.css">
-
 </head>
 
 <body>
 
-<h1 class="title">Select Team</h1>
+<h2>Enter Pappan Name</h2>
+
+<input id="pappanInput" placeholder="Pappan Name">
+
+<h3>Select Team</h3>
 
 <button onclick="showNames('vadakkekara')">വടക്കേക്കര</button>
 <button onclick="showNames('kizhakkekara')">കിഴക്കേക്കര</button>
@@ -21,49 +21,56 @@
 
 <script>
 
-const teams = {
+const teams={
 
-vadakkekara: [
-
+vadakkekara:[
 "മണ്ണന്തല അച്ചു",
 "പൊന്നുമഠത്തിൽ ലച്ചുകുട്ടി",
 "വടക്കേക്കര കൊമ്പൻ",
 "വടക്കേക്കര മണികണ്ഠൻ",
 "വടക്കേക്കര ഗജരാജൻ"
-
 ],
 
-kizhakkekara: [
-
+kizhakkekara:[
 "മനത്താനത്ത് മഗേഷ്",
 "കുന്നിൻച്ചരുവിൽ ജനീലിയ",
 "വള്ളികൊമ്പിൻ ജൂഡൻ",
 "കാക്കനാട് സോണി",
 "മല്ലപ്പള്ളി ആലുവാക്കൊമ്പൻ"
-
 ]
 
 };
 
 function showNames(team){
 
+let pappan=document.getElementById("pappanInput").value;
+
+if(!pappan){
+
+alert("Please enter Pappan name");
+
+return;
+
+}
+
+localStorage.setItem("pappan",pappan);
 localStorage.setItem("team",team);
 
-let container = document.getElementById("names");
+let container=document.getElementById("names");
 
-container.innerHTML = "<h2>Select Elephant</h2>";
+container.innerHTML="";
 
-teams[team].forEach(name => {
+teams[team].forEach(name=>{
 
-let btn = document.createElement("button");
+let btn=document.createElement("button");
 
-btn.innerText = name;
+btn.innerText=name;
 
-btn.onclick = ()=>{
+btn.onclick=()=>{
 
 localStorage.setItem("playerName",name);
 
-window.location = "game.html";
+window.location="game.html";
 
 };
 
