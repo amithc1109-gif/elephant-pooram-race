@@ -1,155 +1,169 @@
-const express=require("express");
-const http=require("http");
-const {Server}=require("socket.io");
+const express = require("express");
+const http = require("http");
+const { Server } = require("socket.io");
 
-const app=express();
-const server=http.createServer(app);
-const io=new Server(server);
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server);
 
 app.use(express.static("public"));
 
-let players=[];
-let raceStarted=false;
-let finishOrder=[];
+let players = [];
+let raceStarted = false;
+let finishOrder = [];
 
-const FINISH=1500;
+const FINISH = 1500;
 
-/* API FOR TEAM PAGE */
+/* API so team page can see taken elephants */
 
-app.get("/players",(req,res)=>{
-res.json(players);
+app.get("/players", (req, res) => {
+  res.json(players);
 });
 
-io.on("connection",(socket)=>{
+io.on("connection", (socket) => {
 
 /* JOIN */
 
-socket.on("join",(data)=>{
+socket.on("join", (data) => {
 
-const {name,team,paapaan,role}=data;
+const { name, team, paapaan, role } = data;
 
 /* ADMIN */
 
-if(role==="admin"){
+if (role === "admin") {
 socket.emit("admin");
 return;
 }
 
 /* SPECTATOR */
 
-if(role==="spectator"){
+if (role === "spectator") {
+
 socket.emit("spectator");
+
+/* allow spectators to watch immediately */
+
+socket.emit("players", players);
+socket.emit("positions", players);
+
 return;
 }
 
-/* PREVENT DUPLICATE ELEPHANT */
+/* PLAYER REJOIN (page refresh) */
 
-let exists=players.find(p=>p.name===name);
+let existing = players.find(p => p.name === name);
 
-if(exists){
-socket.emit("nameTaken");
+if (existing) {
+
+existing.id = socket.id;
+
+socket.emit("rejoin");
+
+io.emit("players", players);
+io.emit("positions", players);
+
 return;
 }
 
 /* ADD PLAYER */
 
-let player={
-id:socket.id,
-name,
-team,
-paapaan,
-position:0
+let player = {
+id: socket.id,
+name: name,
+team: team,
+paapaan: paapaan,
+position: 0
 };
 
 players.push(player);
 
-io.emit("players",players);
-io.emit("positions",players);
+socket.emit("playerJoined");
+
+io.emit("players", players);
+io.emit("positions", players);
 
 });
 
 /* MOVE */
 
-socket.on("move",()=>{
+socket.on("move", () => {
 
-if(!raceStarted) return;
+if (!raceStarted) return;
 
-let player=players.find(p=>p.id===socket.id);
+let player = players.find(p => p.id === socket.id);
 
-if(!player) return;
+if (!player) return;
 
-player.position+=25;
+player.position += 25;
 
-/* SPECIAL ELEPHANT */
+/* special elephant behaviour */
 
-if(
-player.name==="കുന്നിൻച്ചരുവിൽ ജനീലിയ" &&
-player.position>600 &&
-player.position<800
-){
-player.position-=40;
+if (
+player.name === "കുന്നിൻച്ചരുവിൽ ജനീലിയ" &&
+player.position > 600 &&
+player.position < 800
+) {
+player.position -= 40;
 }
 
-/* FINISH */
+/* finish */
 
-if(player.position>=FINISH){
+if (player.position >= FINISH) {
 
-player.position=FINISH;
+player.position = FINISH;
 
-if(!finishOrder.find(p=>p.id===player.id)){
+if (!finishOrder.find(p => p.id === player.id)) {
 finishOrder.push(player);
 }
 
-/* TOP 3 */
+if (finishOrder.length === 3) {
 
-if(finishOrder.length===3){
+raceStarted = false;
 
-raceStarted=false;
-
-io.emit("top3",finishOrder.slice(0,3));
+io.emit("top3", finishOrder.slice(0, 3));
 
 }
 
 }
 
-io.emit("positions",players);
+io.emit("positions", players);
 
 });
 
-/* START */
+/* START RACE */
 
-socket.on("startRace",()=>{
+socket.on("startRace", () => {
 
-players.forEach(p=>p.position=0);
+players.forEach(p => p.position = 0);
 
-finishOrder=[];
+finishOrder = [];
 
-io.emit("positions",players);
+io.emit("positions", players);
 
 io.emit("countdown");
 
-setTimeout(()=>{
+setTimeout(() => {
 
-raceStarted=true;
+raceStarted = true;
 
-},3000);
+}, 3000);
 
 });
 
 /* RESET */
 
-socket.on("resetRace",()=>{
+socket.on("resetRace", () => {
 
-raceStarted=false;
+raceStarted = false;
 
-players.forEach(p=>p.position=0);
+players.forEach(p => p.position = 0);
 
-finishOrder=[];
+finishOrder = [];
 
-io.emit("positions",players);
-
-});
+io.emit("positions", players);
 
 });
 
-server.listen(process.env.PORT||3000);
+});
+
+server.listen(process.env.PORT || 3000);
