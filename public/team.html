@@ -2,15 +2,18 @@
 <html>
 
 <head>
+
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
 <link rel="stylesheet" href="style.css">
+
 </head>
 
 <body>
 
-<h2>Enter Pappan Name</h2>
+<h2>Enter Paapaan Name</h2>
 
-<input id="pappanInput" placeholder="Pappan Name">
+<input id="paapaanInput" placeholder="Paapaan Name">
 
 <h3>Select Team</h3>
 
@@ -43,28 +46,43 @@ kizhakkekara:[
 
 function showNames(team){
 
-let pappan=document.getElementById("pappanInput").value;
+let paapaan=document.getElementById("paapaanInput").value;
 
-if(!pappan){
+if(!paapaan){
 
-alert("Please enter Pappan name");
+alert("Please enter Paapaan name");
 
 return;
 
 }
 
-localStorage.setItem("pappan",pappan);
+localStorage.setItem("paapaan",paapaan);
 localStorage.setItem("team",team);
 
 let container=document.getElementById("names");
 
 container.innerHTML="";
 
+/* GET TAKEN ELEPHANTS */
+
+fetch("/players")
+.then(res=>res.json())
+.then(players=>{
+
 teams[team].forEach(name=>{
 
 let btn=document.createElement("button");
 
 btn.innerText=name;
+
+let taken=players.find(p=>p.name===name);
+
+if(taken){
+
+btn.disabled=true;
+btn.innerText=name+" (Taken)";
+
+}
 
 btn.onclick=()=>{
 
@@ -75,6 +93,8 @@ window.location="game.html";
 };
 
 container.appendChild(btn);
+
+});
 
 });
 

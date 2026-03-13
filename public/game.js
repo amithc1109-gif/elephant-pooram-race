@@ -10,6 +10,14 @@ let canRun=false;
 
 let existingBet = localStorage.getItem("bet");
 
+socket.on("nameTaken",()=>{
+
+alert("⚠️ This elephant is already taken. Please choose another one.");
+
+window.location="team.html";
+
+});
+
 if(existingBet){
 
 setTimeout(()=>{
@@ -57,26 +65,28 @@ document.getElementById("betSection").style.display="none";
 
 socket.on("players",(data)=>{
 
-players=data;
+players = data;
 
 draw();
 
-/* betting options */
+/* populate betting options for spectators */
 
-if(role==="spectator"){
+if(role === "spectator"){
 
-let bet=document.getElementById("betChoice");
+let betSelect = document.getElementById("betChoice");
 
-bet.innerHTML="";
+if(!betSelect) return;
+
+betSelect.innerHTML = "<option value=''>Select Elephant</option>";
 
 players.forEach(p=>{
 
-let opt=document.createElement("option");
+let option = document.createElement("option");
 
-opt.value=p.name;
-opt.text=p.name;
+option.value = p.name;
+option.text = p.name;
 
-bet.appendChild(opt);
+betSelect.appendChild(option);
 
 });
 

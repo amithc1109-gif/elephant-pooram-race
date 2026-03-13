@@ -1,42 +1,50 @@
-const express = require("express");
-const http = require("http");
-const { Server } = require("socket.io");
+const express=require("express");
+const http=require("http");
+const {Server}=require("socket.io");
 
-const app = express();
-const server = http.createServer(app);
-const io = new Server(server);
+const app=express();
+const server=http.createServer(app);
+const io=new Server(server);
 
 app.use(express.static("public"));
 
-let players = [];
-let raceStarted = false;
-let finishOrder = [];
+let players=[];
+let raceStarted=false;
+let finishOrder=[];
 
-const FINISH = 1500;
+const FINISH=1500;
 
-io.on("connection", (socket) => {
+/* API FOR TEAM PAGE */
 
-socket.on("join", (data) => {
+app.get("/players",(req,res)=>{
+res.json(players);
+});
 
-const {name,team,pappan,role} = data;
+io.on("connection",(socket)=>{
+
+/* JOIN */
+
+socket.on("join",(data)=>{
+
+const {name,team,paapaan,role}=data;
 
 /* ADMIN */
 
-if(role === "admin"){
+if(role==="admin"){
 socket.emit("admin");
 return;
 }
 
 /* SPECTATOR */
 
-if(role === "spectator"){
+if(role==="spectator"){
 socket.emit("spectator");
 return;
 }
 
 /* PREVENT DUPLICATE ELEPHANT */
 
-let exists = players.find(p=>p.name === name);
+let exists=players.find(p=>p.name===name);
 
 if(exists){
 socket.emit("nameTaken");
@@ -45,11 +53,11 @@ return;
 
 /* ADD PLAYER */
 
-let player = {
-id: socket.id,
+let player={
+id:socket.id,
 name,
 team,
-pappan,
+paapaan,
 position:0
 };
 
@@ -62,15 +70,15 @@ io.emit("positions",players);
 
 /* MOVE */
 
-socket.on("move", () => {
+socket.on("move",()=>{
 
 if(!raceStarted) return;
 
-let player = players.find(p=>p.id===socket.id);
+let player=players.find(p=>p.id===socket.id);
 
 if(!player) return;
 
-player.position += 25;
+player.position+=25;
 
 /* SPECIAL ELEPHANT */
 
@@ -79,26 +87,26 @@ player.name==="കുന്നിൻച്ചരുവിൽ ജനീലിയ"
 player.position>600 &&
 player.position<800
 ){
-player.position -= 40;
+player.position-=40;
 }
 
 /* FINISH */
 
-if(player.position >= FINISH){
+if(player.position>=FINISH){
 
-player.position = FINISH;
+player.position=FINISH;
 
 if(!finishOrder.find(p=>p.id===player.id)){
 finishOrder.push(player);
 }
 
-/* SEND TOP 3 */
+/* TOP 3 */
 
-if(finishOrder.length === 3){
+if(finishOrder.length===3){
 
-raceStarted = false;
+raceStarted=false;
 
-io.emit("top3",finishOrder);
+io.emit("top3",finishOrder.slice(0,3));
 
 }
 
@@ -143,4 +151,5 @@ io.emit("positions",players);
 });
 
 });
-server.listen(process.env.PORT || 3000);
+
+server.listen(process.env.PORT||3000);
