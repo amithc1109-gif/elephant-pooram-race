@@ -8,6 +8,16 @@ const paapaan=localStorage.getItem("paapaan");
 let players=[];
 let canRun=false;
 
+/* ADMIN UI */
+
+socket.on("admin", () => {
+
+document.getElementById("runBtn").style.display = "none";
+
+document.getElementById("adminControls").style.display = "block";
+
+});
+
 /* join */
 
 socket.emit("join",{
@@ -16,6 +26,8 @@ team:team,
 paapaan:paapaan,
 role:role
 });
+
+
 
 /* spectator UI */
 
@@ -93,6 +105,15 @@ canRun=true;
 },1000);
 
 });
+
+/* start end race */
+function start(){
+socket.emit("startRace");
+}
+
+function resetRace(){
+socket.emit("resetRace");
+}
 
 /* run */
 
