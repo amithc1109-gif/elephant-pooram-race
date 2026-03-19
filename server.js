@@ -9,12 +9,14 @@ const io = new Server(server);
 app.use(express.static("public"));
 
 let players = [];
+let admin = null;
+
 let raceStarted = false;
 let finishOrder = [];
+let leaderboard = {};
 
 const FINISH = 1500;
-
-/* API so team page can see taken elephants */
+const RACE_TIME = 60000; // 1 minute
 
 app.get("/players", (req, res) => {
   res.json(players);
@@ -22,147 +24,154 @@ app.get("/players", (req, res) => {
 
 io.on("connection", (socket) => {
 
-/* JOIN */
+  /* JOIN */
 
-socket.on("join", (data) => {
+  socket.on("join", (data) => {
 
-const { name, team, paapaan, role } = data;
+    const { name, team, paapaan, role } = data;
 
-/* ADMIN */
+    if (role === "admin") {
+      admin = socket.id;
+      socket.emit("admin");
+      socket.emit("players", players);
+      return;
+    }
 
-if (role === "admin") {
-socket.emit("admin");
-return;
-}
+    if (role === "spectator") {
+      socket.emit("spectator");
+      socket.emit("players", players);
+      socket.emit("positions", players);
+      return;
+    }
 
-/* SPECTATOR */
+    /* REJOIN */
 
-if (role === "spectator") {
+    let existing = players.find(p => p.name === name);
 
-socket.emit("spectator");
+    if (existing) {
+      existing.id = socket.id;
+      socket.emit("rejoined");
+      io.emit("players", players);
+      io.emit("positions", players);
+      return;
+    }
 
-/* allow spectators to watch immediately */
+    /* NEW PLAYER */
 
-socket.emit("players", players);
-socket.emit("positions", players);
+    let player = {
+      id: socket.id,
+      name,
+      team,
+      paapaan,
+      position: 0
+    };
 
-return;
-}
+    players.push(player);
 
-/* PLAYER REJOIN (page refresh) */
+    if (!leaderboard[name]) {
+      leaderboard[name] = 0;
+    }
 
-let existing = players.find(p => p.name === name);
+    io.emit("players", players);
+    io.emit("positions", players);
+  });
 
-if (existing) {
+  /* MOVE */
 
-existing.id = socket.id;
+  socket.on("move", () => {
 
-socket.emit("rejoin");
+    if (!raceStarted) return;
 
-io.emit("players", players);
-io.emit("positions", players);
+    let player = players.find(p => p.id === socket.id);
+    if (!player) return;
 
-return;
-}
+    player.position += 25;
 
-/* ADD PLAYER */
+    if (player.position >= FINISH) {
+      player.position = FINISH;
 
-let player = {
-id: socket.id,
-name: name,
-team: team,
-paapaan: paapaan,
-position: 0
-};
+      if (!finishOrder.find(p => p.id === player.id)) {
+        finishOrder.push(player);
+      }
+    }
 
-players.push(player);
+    io.emit("positions", players);
+  });
 
-socket.emit("playerJoined");
+  /* START */
 
-io.emit("players", players);
-io.emit("positions", players);
+  socket.on("startRace", () => {
 
-});
+    if (socket.id !== admin) return;
 
-/* MOVE */
+    players.forEach(p => p.position = 0);
+    finishOrder = [];
 
-socket.on("move", () => {
+    io.emit("positions", players);
+    io.emit("countdown");
 
-if (!raceStarted) return;
+    setTimeout(() => {
 
-let player = players.find(p => p.id === socket.id);
+      raceStarted = true;
 
-if (!player) return;
+      /* TIMER START */
+      setTimeout(() => {
 
-player.position += 25;
+        raceStarted = false;
 
-/* special elephant behaviour */
+        calculatePoints();
 
-if (
-player.name === "കുന്നിൻച്ചരുവിൽ ജനീലിയ" &&
-player.position > 600 &&
-player.position < 800
-) {
-player.position -= 40;
-}
+        io.emit("raceEnded", {
+          finishOrder,
+          leaderboard
+        });
 
-/* finish */
+      }, RACE_TIME);
 
-if (player.position >= FINISH) {
+    }, 3000);
+  });
 
-player.position = FINISH;
+  /* CALCULATE POINTS */
 
-if (!finishOrder.find(p => p.id === player.id)) {
-finishOrder.push(player);
-}
+  function calculatePoints() {
 
-if (finishOrder.length === 3) {
+    let points = [10,9,8,7,6,5,4,3,2,1];
 
-raceStarted = false;
+    finishOrder.forEach((p, index) => {
 
-io.emit("top3", finishOrder.slice(0, 3));
+      if (points[index]) {
+        leaderboard[p.name] += points[index];
+      }
 
-}
+    });
 
-}
+  }
 
-io.emit("positions", players);
+  /* REMOVE PLAYER */
 
-});
+  socket.on("removePlayer", (name) => {
 
-/* START RACE */
+    if (socket.id !== admin) return;
 
-socket.on("startRace", () => {
+    players = players.filter(p => p.name !== name);
 
-players.forEach(p => p.position = 0);
+    io.emit("players", players);
+    io.emit("positions", players);
+  });
 
-finishOrder = [];
+  /* RESET */
 
-io.emit("positions", players);
+  socket.on("resetRace", () => {
 
-io.emit("countdown");
+    if (socket.id !== admin) return;
 
-setTimeout(() => {
+    raceStarted = false;
 
-raceStarted = true;
+    players.forEach(p => p.position = 0);
+    finishOrder = [];
 
-}, 3000);
-
-});
-
-/* RESET */
-
-socket.on("resetRace", () => {
-
-raceStarted = false;
-
-players.forEach(p => p.position = 0);
-
-finishOrder = [];
-
-io.emit("positions", players);
-
-});
+    io.emit("positions", players);
+  });
 
 });
 
