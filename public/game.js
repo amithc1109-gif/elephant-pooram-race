@@ -1,305 +1,217 @@
 const socket = io();
 
-/* USER INFO */
-
 const role = localStorage.getItem("role") || "spectator";
 const playerName = localStorage.getItem("playerName");
-const team = localStorage.getItem("team");
 const paapaan = localStorage.getItem("paapaan");
 
 let players = [];
 let canRun = false;
+let raceFinished = false;
 
 /* JOIN */
 
-socket.emit("join", {
-    name: playerName,
-    team: team,
-    paapaan: paapaan,
-    role: role
+socket.emit("join",{
+name:playerName,
+paapaan:paapaan,
+role:role
 });
 
-/* UI SETUP */
+/* hide bet */
 
-if (role === "spectator") {
-    document.getElementById("runBtn").style.display = "none";
+if(role !== "spectator"){
+document.getElementById("betSection").style.display="none";
 }
-
-if (role !== "spectator") {
-    let betUI = document.getElementById("betSection");
-    if (betUI) betUI.style.display = "none";
-}
-
-/* ADMIN */
-
-socket.on("admin", () => {
-    document.getElementById("runBtn").style.display = "none";
-    document.getElementById("adminControls").style.display = "block";
-});
 
 /* PLAYERS */
 
-socket.on("players", (data) => {
-
-    players = data;
-
-    draw();
-
-    /* populate betting dropdown */
-
-    if (role === "spectator") {
-
-        let select = document.getElementById("betChoice");
-
-        if (!select) return;
-
-        select.innerHTML = "<option value=''>Select Elephant</option>";
-
-        players.forEach(p => {
-
-            let opt = document.createElement("option");
-
-            opt.value = p.name;
-            opt.text = p.name;
-
-            select.appendChild(opt);
-
-        });
-
-    }
-
+socket.on("players",(data)=>{
+players = data;
+draw();
 });
 
 /* POSITIONS */
 
-socket.on("positions", (data) => {
+socket.on("positions",(data)=>{
 
-    players = data;
+if(raceFinished) return; // 🔥 prevent overwrite
 
-    draw();
+players = data;
 
-});
+draw();
 
-/* COUNTDOWN */
-
-socket.on("countdown", () => {
-
-    let c = 3;
-
-    let interval = setInterval(() => {
-
-        document.getElementById("winner").innerHTML = c;
-
-        c--;
-
-        if (c < 0) {
-
-            clearInterval(interval);
-
-            document.getElementById("winner").innerHTML = "GO!";
-
-            startTimer();
-
-            canRun = true;
-
-        }
-
-    }, 1000);
+cameraFollow();
 
 });
 
-/* TIMER */
+/* CAMERA FOLLOW */
 
-function startTimer() {
+function cameraFollow(){
 
-    let time = 60;
+let me = players.find(p=>p.name===playerName);
 
-    let timer = setInterval(() => {
+if(!me) return;
 
-        document.getElementById("timer").innerHTML = "⏱ " + time + "s";
+let camera = document.getElementById("camera");
+let track = document.getElementById("track");
 
-        time--;
+let offset = me.position - (camera.clientWidth/2);
 
-        if (time < 0) {
-            clearInterval(timer);
-        }
+if(offset < 0) offset = 0;
 
-    }, 1000);
+track.style.left = -offset + "px";
 
 }
 
 /* RUN */
 
-function run() {
+function run(){
+if(role==="player" && canRun){
+socket.emit("move");
+}
+}
 
-    if (role === "player" && canRun) {
-        socket.emit("move");
-    }
+/* COUNTDOWN */
+
+socket.on("countdown",()=>{
+
+let c=3;
+
+let timer=setInterval(()=>{
+
+winner.innerHTML=c;
+
+c--;
+
+if(c<0){
+
+clearInterval(timer);
+
+winner.innerHTML="GO!";
+
+canRun=true;
 
 }
 
-/* ADMIN CONTROLS */
-
-function start() {
-    socket.emit("startRace");
-}
-
-function resetRace() {
-    socket.emit("resetRace");
-}
-
-/* REMOVE PLAYER (ADMIN) */
-
-function removePlayer(name) {
-    socket.emit("removePlayer", name);
-}
-
-/* BETTING */
-
-function placeBet() {
-
-    let select = document.getElementById("betChoice");
-
-    let bet = select.value;
-
-    if (!bet) {
-        alert("Select elephant");
-        return;
-    }
-
-    /* each spectator has own bet */
-
-    localStorage.setItem("myBet", bet);
-
-    alert("Your bet: " + bet);
-
-}
-
-/* RACE END */
-
-socket.on("raceEnded", (data) => {
-
-    let { finishOrder, leaderboard } = data;
-
-    showResults(finishOrder, leaderboard);
-
-    launchFireworks();
-
-    /* stop running */
-
-    canRun = false;
+},1000);
 
 });
 
-/* SHOW RESULTS */
+/* TOP 3 */
 
-function showResults(order, leaderboard) {
+socket.on("top3",(list)=>{
 
-    let html = "<h2>🏆 Race Results</h2>";
+raceFinished = true;
 
-    order.forEach((p, i) => {
-        html += `${i + 1}. ${p.name} - ${p.paapaan}<br>`;
-    });
+showResults(list);
 
-    /* show leaderboard */
+launchFireworks();
 
-    html += "<h3>📊 Leaderboard</h3>";
+});
 
-    Object.keys(leaderboard).forEach(name => {
-        html += `${name} : ${leaderboard[name]} pts<br>`;
-    });
+/* RESULTS */
 
-    /* ONLY spectators see bet result */
+function showResults(list){
 
-    if (role === "spectator") {
+let html=`
+<h2>🏆 Results</h2>
 
-        let bet = localStorage.getItem("myBet");
+🥇 ${list[0].name} - ${list[0].paapaan}<br>
+🥈 ${list[1].name} - ${list[1].paapaan}<br>
+🥉 ${list[2].name} - ${list[2].paapaan}<br>
+`;
 
-        if (bet) {
+if(role==="spectator"){
 
-            if (bet === order[0]?.name) {
-                html += "<br><b style='color:green'>🎉 You WON your bet!</b>";
-            } else {
-                html += "<br><b style='color:red'>❌ You lost your bet</b>";
-            }
+let bet=localStorage.getItem("myBet");
 
-        }
+if(bet){
 
-    }
-
-    document.getElementById("winner").innerHTML = html;
+if(bet===list[0].name){
+html+="<br>🎉 You WON!";
+}else{
+html+="<br>❌ You lost";
+}
 
 }
 
-/* DRAW TRACK */
+}
 
-function draw() {
+winner.innerHTML=html;
 
-    let html = "";
+}
 
-    players.forEach((p, index) => {
+/* DRAW */
 
-        let you = "";
+function draw(){
 
-        if (p.name === playerName) {
-            you = " ⭐ YOU";
-        }
+let html="";
 
-        html += `
-        <div class="lane">
+players.forEach((p,i)=>{
 
-            <div class="start"></div>
-            <div class="finish"></div>
+let you = p.name===playerName ? "⭐" : "";
 
-            <b>Lane ${index + 1}</b><br>
+html+=`
+<div class="lane">
 
-            <span>${p.name}${you}</span><br>
-            <small>Paapaan: ${p.paapaan}</small><br>
+<div class="start"></div>
+<div class="finish"></div>
 
-            ${role === "admin" ? `<button onclick="removePlayer('${p.name}')">❌ Remove</button>` : ""}
+<b>Lane ${i+1}</b> ${you}<br>
 
-            <div class="elephant" style="left:${p.position}px;">🐘</div>
+<small>${p.name} - ${p.paapaan}</small>
 
-        </div>
-        `;
+<img class="elephant" src="elephant.png" style="left:${p.position}px;">
 
-    });
+</div>
+`;
 
-    document.getElementById("track").innerHTML = html;
+});
+
+track.innerHTML=html;
+
+}
+
+/* BET */
+
+function placeBet(){
+
+let val=document.getElementById("betChoice").value;
+
+if(!val){
+alert("Select elephant");
+return;
+}
+
+localStorage.setItem("myBet",val);
+
+alert("Bet placed!");
 
 }
 
 /* FIREWORKS */
 
-function launchFireworks() {
+function launchFireworks(){
 
-    let canvas = document.getElementById("fireworks");
+let canvas=document.getElementById("fireworks");
+let ctx=canvas.getContext("2d");
 
-    let ctx = canvas.getContext("2d");
+canvas.width=window.innerWidth;
+canvas.height=window.innerHeight;
 
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+for(let i=0;i<150;i++){
 
-    for (let i = 0; i < 200; i++) {
+ctx.fillStyle=`hsl(${Math.random()*360},100%,50%)`;
 
-        ctx.fillStyle = `hsl(${Math.random() * 360},100%,50%)`;
+ctx.beginPath();
 
-        ctx.beginPath();
+ctx.arc(Math.random()*canvas.width,Math.random()*canvas.height,4,0,Math.PI*2);
 
-        ctx.arc(
-            Math.random() * canvas.width,
-            Math.random() * canvas.height,
-            5,
-            0,
-            Math.PI * 2
-        );
+ctx.fill();
 
-        ctx.fill();
+}
 
-    }
-
-    setTimeout(() => {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-    }, 2500);
+setTimeout(()=>{
+ctx.clearRect(0,0,canvas.width,canvas.height);
+},2000);
 
 }
