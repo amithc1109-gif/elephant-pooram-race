@@ -1,29 +1,168 @@
-socket.on("startRace", () => {
+const express = require("express");
+const http = require("http");
+const { Server } = require("socket.io");
 
-if (socket.id !== admin) return;
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server);
 
-/* lock participants for this race */
-raceParticipants = [...players];
+app.use(express.static("public"));
 
-raceParticipants.forEach(p => p.position = 0);
+let players = [];
+let raceStarted = false;
+let finishOrder = [];
+let admin = null;
 
-finishOrder = [];
+const FINISH = 1500;
 
-io.emit("positions", raceParticipants);
-io.emit("countdown");
+app.get("/players", (req, res) => {
+    res.json(players);
+});
 
-setTimeout(() => {
+io.on("connection", (socket) => {
 
-raceStarted = true;
+    console.log("User connected");
 
-/* timer */
+    /* JOIN */
 
-setTimeout(() => {
+    socket.on("join", (data) => {
 
-endRace();
+        const { name, team, paapaan, role } = data;
 
-}, 60000);
+        /* ADMIN */
 
-}, 3000);
+        if (role === "admin") {
+            admin = socket.id;
+            socket.emit("admin");
+            socket.emit("players", players);
+            socket.emit("positions", players);
+            return;
+        }
 
+        /* SPECTATOR */
+
+        if (role === "spectator") {
+            socket.emit("spectator");
+            socket.emit("players", players);
+            socket.emit("positions", players);
+            return;
+        }
+
+        /* REJOIN (refresh fix) */
+
+        let existing = players.find(p => p.name === name);
+
+        if (existing) {
+            existing.id = socket.id;
+            socket.emit("rejoined");
+            io.emit("players", players);
+            io.emit("positions", players);
+            return;
+        }
+
+        /* NEW PLAYER */
+
+        let player = {
+            id: socket.id,
+            name: name,
+            team: team,
+            paapaan: paapaan || "Unknown",
+            position: 0
+        };
+
+        players.push(player);
+
+        io.emit("players", players);
+        io.emit("positions", players);
+    });
+
+    /* MOVE */
+
+    socket.on("move", () => {
+
+        if (!raceStarted) return;
+
+        let player = players.find(p => p.id === socket.id);
+
+        if (!player) return;
+
+        player.position += 25;
+
+        /* funny elephant */
+
+        if (
+            player.name === "കുന്നിൻച്ചരുവിൽ ജനീലിയ" &&
+            player.position > 600 &&
+            player.position < 800
+        ) {
+            player.position -= 40;
+        }
+
+        if (player.position >= FINISH) {
+
+            player.position = FINISH;
+
+            if (!finishOrder.find(p => p.id === player.id)) {
+                finishOrder.push(player);
+            }
+
+            if (finishOrder.length === 3) {
+                raceStarted = false;
+                io.emit("top3", finishOrder.slice(0, 3));
+            }
+        }
+
+        io.emit("positions", players);
+    });
+
+    /* START RACE (ADMIN ONLY) */
+
+    socket.on("startRace", () => {
+
+        if (socket.id !== admin) return;
+
+        players.forEach(p => p.position = 0);
+        finishOrder = [];
+
+        io.emit("positions", players);
+        io.emit("countdown");
+
+        setTimeout(() => {
+            raceStarted = true;
+        }, 3000);
+    });
+
+    /* RESET */
+
+    socket.on("resetRace", () => {
+
+        if (socket.id !== admin) return;
+
+        raceStarted = false;
+
+        players.forEach(p => p.position = 0);
+        finishOrder = [];
+
+        io.emit("positions", players);
+    });
+
+    /* DISCONNECT */
+
+    socket.on("disconnect", () => {
+
+        players = players.filter(p => p.id !== socket.id);
+
+        if (socket.id === admin) {
+            admin = null;
+        }
+
+        io.emit("players", players);
+    });
+
+});
+
+const PORT = process.env.PORT || 3000;
+
+server.listen(PORT, () => {
+    console.log("Server running on port " + PORT);
 });
