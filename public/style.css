@@ -105,6 +105,11 @@ font-weight:bold;
 
 }
 
+#track{
+overflow-x: auto;
+scroll-behavior: smooth;
+}
+
 #fireworks{
 
 position:fixed;
