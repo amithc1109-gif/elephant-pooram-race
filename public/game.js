@@ -7,52 +7,23 @@ const paapaan = localStorage.getItem("paapaan");
 let players = [];
 let canRun = false;
 
-/* FORCE ADMIN UI (no delay issues) */
-
-if(localStorage.getItem("isAdmin") === "true"){
-
-setTimeout(()=>{
-    document.getElementById("adminControls").style.display = "block";
-    document.getElementById("runBtn").style.display = "none";
-},300);
-
-}
-
-/* DOM READY FIX */
-window.onload = () => {
-
-    /* Hide betting if not spectator */
-    if(role !== "spectator"){
-        let bet = document.getElementById("betSection");
-        if(bet) bet.style.display = "none";
-    }
-
-};
-
 /* JOIN */
-
 socket.emit("join", {
     name: playerName,
     paapaan: paapaan,
     role: role
 });
 
-/* ✅ ADMIN UI FIX */
-
+/* ADMIN UI */
 socket.on("admin", () => {
-    console.log("ADMIN MODE ACTIVE");
     document.getElementById("adminControls").style.display = "block";
+    document.getElementById("runBtn").style.display = "none";
 });
 
 /* PLAYERS */
-
 socket.on("players", (data) => {
-
     players = data;
-
     draw();
-
-    /* ✅ FIX: Populate betting dropdown */
 
     let betSelect = document.getElementById("betChoice");
 
@@ -66,38 +37,31 @@ socket.on("players", (data) => {
             betSelect.appendChild(opt);
         });
     }
-
 });
 
 /* POSITIONS */
-
 socket.on("positions", (data) => {
     players = data;
     draw();
 });
 
 /* RUN */
-
 function run() {
     if (role === "player" && canRun) {
         socket.emit("move");
     }
 }
 
-/* ADMIN ACTIONS */
-
+/* ADMIN */
 function startRace() {
-    console.log("Start clicked");
     socket.emit("startRace");
 }
 
 function resetRace() {
-    console.log("Reset clicked");
     socket.emit("resetRace");
 }
 
 /* COUNTDOWN */
-
 socket.on("countdown", () => {
 
     let c = 3;
@@ -117,22 +81,20 @@ socket.on("countdown", () => {
     }, 1000);
 });
 
-/* RESULTS + FIREWORKS */
-
+/* RESULTS */
 socket.on("top3", (list) => {
 
     document.getElementById("winner").innerHTML = `
     <h2>🏆 Results</h2>
-    🥇 ${list[0].name}<br>
-    🥈 ${list[1].name}<br>
-    🥉 ${list[2].name}
+    🥇 ${list[0].name} - ${list[0].paapaan}<br>
+    🥈 ${list[1].name} - ${list[1].paapaan}<br>
+    🥉 ${list[2].name} - ${list[2].paapaan}
     `;
 
     launchFireworks();
 });
 
 /* DRAW */
-
 function draw() {
 
     let html = "";
@@ -159,12 +121,10 @@ function draw() {
         `;
     });
 
-    let track = document.getElementById("track");
-    if(track) track.innerHTML = html;
+    document.getElementById("track").innerHTML = html;
 }
 
 /* FIREWORKS */
-
 function launchFireworks() {
 
     let canvas = document.getElementById("fireworks");
@@ -185,12 +145,4 @@ function launchFireworks() {
     setTimeout(() => {
         ctx.clearRect(0,0,canvas.width,canvas.height);
     },2000);
-}
-
-/* OPTIONAL: FORCE ADMIN (TEMP DEBUG) */
-
-if(role === "admin"){
-    setTimeout(()=>{
-        document.getElementById("adminControls").style.display = "block";
-    },500);
 }

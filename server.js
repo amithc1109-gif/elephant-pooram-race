@@ -17,26 +17,38 @@ const FINISH = 1200;
 
 io.on("connection", (socket) => {
 
+    console.log("User connected:", socket.id);
+
     socket.on("join", (data) => {
 
         const { name, paapaan, role } = data;
 
         /* ADMIN */
-
         if (role === "admin") {
             admin = socket.id;
             socket.emit("admin");
+
+            // send players so admin can see track
+            socket.emit("players", players);
             return;
         }
 
         /* SPECTATOR */
-
         if (role === "spectator") {
             socket.emit("players", players);
             return;
         }
 
         /* PLAYER */
+
+        if (!name) return;
+
+        // prevent duplicate names
+        let exists = players.find(p => p.name === name);
+        if (exists) {
+            socket.emit("nameTaken");
+            return;
+        }
 
         players.push({
             id: socket.id,
@@ -49,7 +61,6 @@ io.on("connection", (socket) => {
     });
 
     /* MOVE */
-
     socket.on("move", () => {
 
         if (!raceStarted) return;
@@ -77,10 +88,11 @@ io.on("connection", (socket) => {
     });
 
     /* START */
-
     socket.on("startRace", () => {
 
         if (socket.id !== admin) return;
+
+        console.log("Race started by admin");
 
         players.forEach(p => p.position = 0);
         finishOrder = [];
@@ -94,10 +106,11 @@ io.on("connection", (socket) => {
     });
 
     /* RESET */
-
     socket.on("resetRace", () => {
 
         if (socket.id !== admin) return;
+
+        console.log("Race reset");
 
         raceStarted = false;
         finishOrder = [];
@@ -107,6 +120,19 @@ io.on("connection", (socket) => {
         io.emit("positions", players);
     });
 
+    socket.on("disconnect", () => {
+
+        players = players.filter(p => p.id !== socket.id);
+
+        if(socket.id === admin){
+            admin = null;
+        }
+
+        io.emit("players", players);
+    });
+
 });
 
-server.listen(process.env.PORT || 3000);
+server.listen(process.env.PORT || 3000, () => {
+    console.log("Server running...");
+});
