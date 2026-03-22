@@ -1,149 +1,200 @@
-const socket = io();
+const express = require("express");
+const http = require("http");
+const { Server } = require("socket.io");
 
-const role = localStorage.getItem("role");
-const playerName = localStorage.getItem("playerName");
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server);
+
+app.use(express.static("public"));
 
 let players = [];
-let canRun = false;
-let myBet = null;
+let admin = null;
+let raceStarted = false;
+let finishOrder = [];
 
-/* JOIN */
-socket.emit("join", {
-    name: playerName,
-    paapaan: localStorage.getItem("paapaan"),
-    role
-});
+let timer = null;
+let timeLeft = 60;
 
-/* ADMIN */
-socket.on("admin", ()=>{
-    document.getElementById("adminControls").style.display = "block";
-});
+const FINISH = 1200;
 
-/* PLAYERS */
-socket.on("players",(data)=>{
-    players = data;
-    draw();
+io.on("connection", (socket) => {
 
-    let bet = document.getElementById("betChoice");
+    console.log("Connected:", socket.id);
 
-    if(role === "spectator" && bet){
-        bet.innerHTML = "";
-        data.forEach(p=>{
-            let o = document.createElement("option");
-            o.value = p.name;
-            o.text = p.name;
-            bet.appendChild(o);
+    socket.on("join", (data) => {
+
+        const { name, paapaan, role } = data;
+
+        /* ADMIN */
+        if(role === "admin"){
+            admin = socket.id;
+            socket.emit("admin");
+            socket.emit("players", players);
+            return;
+        }
+
+        /* SPECTATOR */
+        if(role === "spectator"){
+            socket.emit("players", players);
+            return;
+        }
+
+        /* PLAYER */
+
+        if(!name) return;
+
+        // prevent duplicate elephant
+        let exists = players.find(p => p.name === name);
+        if(exists){
+            socket.emit("nameTaken");
+            return;
+        }
+
+        players.push({
+            id: socket.id,
+            name,
+            paapaan,
+            position: 0,
+            points: 0
         });
-    }
-});
 
-/* MOVE */
-function run(){
-    if(role==="player" && canRun){
-        socket.emit("move");
-    }
-}
-
-/* ADMIN */
-function startRace(){ socket.emit("startRace"); }
-function resetRace(){ socket.emit("resetRace"); }
-
-/* TIMER */
-socket.on("timer",(t)=>{
-    document.getElementById("timer").innerHTML = "⏱ "+t+"s";
-});
-
-/* COUNTDOWN */
-socket.on("countdown",()=>{
-    let c=3;
-    let i=setInterval(()=>{
-        winner.innerHTML=c;
-        c--;
-        if(c<0){
-            clearInterval(i);
-            winner.innerHTML="GO!";
-            canRun=true;
-        }
-    },1000);
-});
-
-/* RESULTS */
-socket.on("top3",(list)=>{
-    winner.innerHTML = `
-    🥇 ${list[0].name}<br>
-    🥈 ${list[1].name}<br>
-    🥉 ${list[2].name}
-    `;
-});
-
-/* LEADERBOARD */
-socket.on("leaderboard",(list)=>{
-    let html="<h3>Leaderboard</h3>";
-    list.forEach((p,i)=>{
-        html += `${i+1}. ${p.name} - ${p.points} pts<br>`;
-    });
-    document.getElementById("leaderboard").innerHTML = html;
-
-    // 🎯 BET RESULT
-    if(role==="spectator" && myBet){
-        if(myBet === list[0].name){
-            alert("🎉 You WON your bet!");
-        } else{
-            alert("❌ You lost your bet");
-        }
-    }
-});
-
-/* BET */
-function placeBet(){
-    if(role!=="spectator") return;
-
-    myBet = document.getElementById("betChoice").value;
-    alert("Bet locked: "+myBet);
-}
-
-/* DRAW */
-function draw(){
-
-    let html="";
-
-    players.forEach((p,i)=>{
-
-        let isMe = (p.name === playerName);
-
-        html+=`
-        <div class="lane">
-
-            <div class="start"></div>
-            <div class="finish"></div>
-
-            <div class="lane-info">
-                Lane ${i+1} ${isMe ? "⭐ YOU":""}<br>
-                ${p.name}<br>
-                ${p.paapaan || ""}
-            </div>
-
-            <div class="elephant" style="left:${p.position}px;">
-                🐘
-            </div>
-
-            ${role==="admin" ? `<button onclick="remove('${p.id}')">❌</button>`:""}
-
-        </div>
-        `;
+        io.emit("players", players);
     });
 
-    let track = document.getElementById("track");
-    track.innerHTML = html;
+    /* MOVE */
+    socket.on("move", () => {
 
-    // 📱 AUTO CAMERA
-    let me = players.find(p=>p.name===playerName);
-    if(me){
-        document.getElementById("camera").scrollLeft = me.position - 100;
+        if(!raceStarted) return;
+
+        let player = players.find(p => p.id === socket.id);
+        if(!player) return;
+
+        player.position += 25;
+
+        if(player.position >= FINISH){
+            player.position = FINISH;
+
+            if(!finishOrder.find(p => p.id === player.id)){
+                finishOrder.push(player);
+            }
+
+            if(finishOrder.length === players.length){
+                endRace();
+            }
+        }
+
+        io.emit("positions", players);
+    });
+
+    /* START RACE */
+    socket.on("startRace", () => {
+
+        if(socket.id !== admin) return;
+
+        // clear old timer
+        if(timer){
+            clearInterval(timer);
+            timer = null;
+        }
+
+        raceStarted = false;
+        finishOrder = [];
+        timeLeft = 60;
+
+        players.forEach(p => p.position = 0);
+
+        io.emit("positions", players);
+        io.emit("countdown");
+
+        setTimeout(()=>{
+
+            raceStarted = true;
+
+            io.emit("timer", timeLeft);
+
+            timer = setInterval(()=>{
+
+                timeLeft--;
+                io.emit("timer", timeLeft);
+
+                if(timeLeft <= 0){
+                    clearInterval(timer);
+                    timer = null;
+                    endRace();
+                }
+
+            },1000);
+
+        },3000);
+    });
+
+    /* RESET */
+    socket.on("resetRace", () => {
+
+        if(socket.id !== admin) return;
+
+        if(timer){
+            clearInterval(timer);
+            timer = null;
+        }
+
+        raceStarted = false;
+        finishOrder = [];
+        timeLeft = 60;
+
+        players.forEach(p=>{
+            p.position = 0;
+            p.points = 0; // reset points
+        });
+
+        io.emit("positions", players);
+        io.emit("timer", timeLeft);
+        io.emit("leaderboard", []);
+    });
+
+    /* REMOVE PLAYER */
+    socket.on("removePlayer", (id)=>{
+        if(socket.id !== admin) return;
+
+        players = players.filter(p => p.id !== id);
+        io.emit("players", players);
+    });
+
+    function endRace(){
+
+        raceStarted = false;
+
+        if(timer){
+            clearInterval(timer);
+            timer = null;
+        }
+
+        let sorted = [...players].sort((a,b)=>b.position - a.position);
+
+        sorted.forEach((p,i)=>{
+            if(i===0) p.points += 20;
+            else if(i===1) p.points += 15;
+            else if(i===2) p.points += 10;
+            else p.points += 5;
+        });
+
+        io.emit("top3", sorted.slice(0,3));
+        io.emit("leaderboard", sorted);
     }
-}
 
-/* ADMIN REMOVE */
-function remove(id){
-    socket.emit("removePlayer",id);
-}
+    socket.on("disconnect", ()=>{
+        players = players.filter(p => p.id !== socket.id);
+
+        if(socket.id === admin){
+            admin = null;
+        }
+
+        io.emit("players", players);
+    });
+
+});
+
+server.listen(process.env.PORT || 3000, ()=>{
+    console.log("Server running...");
+});
