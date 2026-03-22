@@ -17,25 +17,27 @@
 
 <div id="winner"></div>
 
+<!-- RUN BUTTON -->
 <button id="runBtn" onclick="run()">RUN</button>
 
+<!-- ADMIN CONTROLS -->
 <div id="adminControls" style="display:none;">
     <button onclick="startRace()">START</button>
     <button onclick="resetRace()">RESET</button>
 </div>
 
+<!-- BETTING (ONLY FOR SPECTATORS) -->
 <div id="betSection">
-<select id="betChoice"></select>
-<button onclick="placeBet()">Bet</button>
+    <select id="betChoice"></select>
+    <button onclick="placeBet()">Bet</button>
 </div>
 
 <!-- CAMERA VIEW -->
 <div id="camera">
-
-<div id="track"></div>
-
+    <div id="track"></div>
 </div>
 
+<!-- FIREWORKS -->
 <canvas id="fireworks"></canvas>
 
 <script src="game.js"></script>

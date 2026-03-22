@@ -1,217 +1,196 @@
 const socket = io();
 
-const role = localStorage.getItem("role") || "spectator";
+const role = localStorage.getItem("role");
 const playerName = localStorage.getItem("playerName");
 const paapaan = localStorage.getItem("paapaan");
 
 let players = [];
 let canRun = false;
-let raceFinished = false;
+
+/* FORCE ADMIN UI (no delay issues) */
+
+if(localStorage.getItem("isAdmin") === "true"){
+
+setTimeout(()=>{
+    document.getElementById("adminControls").style.display = "block";
+    document.getElementById("runBtn").style.display = "none";
+},300);
+
+}
+
+/* DOM READY FIX */
+window.onload = () => {
+
+    /* Hide betting if not spectator */
+    if(role !== "spectator"){
+        let bet = document.getElementById("betSection");
+        if(bet) bet.style.display = "none";
+    }
+
+};
 
 /* JOIN */
 
-socket.emit("join",{
-name:playerName,
-paapaan:paapaan,
-role:role
+socket.emit("join", {
+    name: playerName,
+    paapaan: paapaan,
+    role: role
 });
 
-/* hide bet */
+/* ✅ ADMIN UI FIX */
 
-if(role !== "spectator"){
-document.getElementById("betSection").style.display="none";
-}
+socket.on("admin", () => {
+    console.log("ADMIN MODE ACTIVE");
+    document.getElementById("adminControls").style.display = "block";
+});
 
 /* PLAYERS */
 
-socket.on("players",(data)=>{
-players = data;
-draw();
+socket.on("players", (data) => {
+
+    players = data;
+
+    draw();
+
+    /* ✅ FIX: Populate betting dropdown */
+
+    let betSelect = document.getElementById("betChoice");
+
+    if(betSelect){
+        betSelect.innerHTML = "";
+
+        data.forEach(p=>{
+            let opt = document.createElement("option");
+            opt.value = p.name;
+            opt.text = p.name;
+            betSelect.appendChild(opt);
+        });
+    }
+
 });
 
 /* POSITIONS */
 
-socket.on("positions",(data)=>{
-
-if(raceFinished) return; // 🔥 prevent overwrite
-
-players = data;
-
-draw();
-
-cameraFollow();
-
+socket.on("positions", (data) => {
+    players = data;
+    draw();
 });
-
-/* CAMERA FOLLOW */
-
-function cameraFollow(){
-
-let me = players.find(p=>p.name===playerName);
-
-if(!me) return;
-
-let camera = document.getElementById("camera");
-let track = document.getElementById("track");
-
-let offset = me.position - (camera.clientWidth/2);
-
-if(offset < 0) offset = 0;
-
-track.style.left = -offset + "px";
-
-}
 
 /* RUN */
 
-function run(){
-if(role==="player" && canRun){
-socket.emit("move");
+function run() {
+    if (role === "player" && canRun) {
+        socket.emit("move");
+    }
 }
+
+/* ADMIN ACTIONS */
+
+function startRace() {
+    console.log("Start clicked");
+    socket.emit("startRace");
+}
+
+function resetRace() {
+    console.log("Reset clicked");
+    socket.emit("resetRace");
 }
 
 /* COUNTDOWN */
 
-socket.on("countdown",()=>{
+socket.on("countdown", () => {
 
-let c=3;
+    let c = 3;
 
-let timer=setInterval(()=>{
+    let timer = setInterval(() => {
 
-winner.innerHTML=c;
+        document.getElementById("winner").innerHTML = c;
 
-c--;
+        c--;
 
-if(c<0){
+        if (c < 0) {
+            clearInterval(timer);
+            document.getElementById("winner").innerHTML = "GO!";
+            canRun = true;
+        }
 
-clearInterval(timer);
-
-winner.innerHTML="GO!";
-
-canRun=true;
-
-}
-
-},1000);
-
+    }, 1000);
 });
 
-/* TOP 3 */
+/* RESULTS + FIREWORKS */
 
-socket.on("top3",(list)=>{
+socket.on("top3", (list) => {
 
-raceFinished = true;
+    document.getElementById("winner").innerHTML = `
+    <h2>🏆 Results</h2>
+    🥇 ${list[0].name}<br>
+    🥈 ${list[1].name}<br>
+    🥉 ${list[2].name}
+    `;
 
-showResults(list);
-
-launchFireworks();
-
+    launchFireworks();
 });
-
-/* RESULTS */
-
-function showResults(list){
-
-let html=`
-<h2>🏆 Results</h2>
-
-🥇 ${list[0].name} - ${list[0].paapaan}<br>
-🥈 ${list[1].name} - ${list[1].paapaan}<br>
-🥉 ${list[2].name} - ${list[2].paapaan}<br>
-`;
-
-if(role==="spectator"){
-
-let bet=localStorage.getItem("myBet");
-
-if(bet){
-
-if(bet===list[0].name){
-html+="<br>🎉 You WON!";
-}else{
-html+="<br>❌ You lost";
-}
-
-}
-
-}
-
-winner.innerHTML=html;
-
-}
 
 /* DRAW */
 
-function draw(){
+function draw() {
 
-let html="";
+    let html = "";
 
-players.forEach((p,i)=>{
+    players.forEach((p, i) => {
 
-let you = p.name===playerName ? "⭐" : "";
+        html += `
+        <div class="lane">
 
-html+=`
-<div class="lane">
+            <div class="start"></div>
+            <div class="finish"></div>
 
-<div class="start"></div>
-<div class="finish"></div>
+            <div class="lane-info">
+                Lane ${i + 1}<br>
+                ${p.name}<br>
+                <small>${p.paapaan || ""}</small>
+            </div>
 
-<b>Lane ${i+1}</b> ${you}<br>
+            <div class="elephant" style="left:${p.position}px;">
+                🐘
+            </div>
 
-<small>${p.name} - ${p.paapaan}</small>
+        </div>
+        `;
+    });
 
-<img class="elephant" src="elephant.png" style="left:${p.position}px;">
-
-</div>
-`;
-
-});
-
-track.innerHTML=html;
-
-}
-
-/* BET */
-
-function placeBet(){
-
-let val=document.getElementById("betChoice").value;
-
-if(!val){
-alert("Select elephant");
-return;
-}
-
-localStorage.setItem("myBet",val);
-
-alert("Bet placed!");
-
+    let track = document.getElementById("track");
+    if(track) track.innerHTML = html;
 }
 
 /* FIREWORKS */
 
-function launchFireworks(){
+function launchFireworks() {
 
-let canvas=document.getElementById("fireworks");
-let ctx=canvas.getContext("2d");
+    let canvas = document.getElementById("fireworks");
+    let ctx = canvas.getContext("2d");
 
-canvas.width=window.innerWidth;
-canvas.height=window.innerHeight;
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 
-for(let i=0;i<150;i++){
+    for (let i = 0; i < 200; i++) {
 
-ctx.fillStyle=`hsl(${Math.random()*360},100%,50%)`;
+        ctx.fillStyle = `hsl(${Math.random()*360},100%,50%)`;
 
-ctx.beginPath();
+        ctx.beginPath();
+        ctx.arc(Math.random()*canvas.width, Math.random()*canvas.height, 4, 0, Math.PI*2);
+        ctx.fill();
+    }
 
-ctx.arc(Math.random()*canvas.width,Math.random()*canvas.height,4,0,Math.PI*2);
-
-ctx.fill();
-
+    setTimeout(() => {
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+    },2000);
 }
 
-setTimeout(()=>{
-ctx.clearRect(0,0,canvas.width,canvas.height);
-},2000);
+/* OPTIONAL: FORCE ADMIN (TEMP DEBUG) */
 
+if(role === "admin"){
+    setTimeout(()=>{
+        document.getElementById("adminControls").style.display = "block";
+    },500);
 }

@@ -1,26 +1,3 @@
-<!DOCTYPE html>
-<html>
-
-<head>
-
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
-<title>വടക്കേക്കര ആനയോട്ടം</title>
-
-<link rel="stylesheet" href="style.css">
-
-</head>
-
-<body>
-
-<h1 class="title">വടക്കേക്കര ആനയോട്ടം 🐘</h1>
-
-<h2>Select Mode</h2>
-
-<button onclick="participant()">Participant</button>
-
-<button onclick="spectator()">Spectator</button>
-
 <script>
 
 function participant(){
@@ -29,7 +6,13 @@ let pass = prompt("Enter Password");
 
 if(pass === "admin123"){
 
+/* ✅ ADMIN SETUP */
+
 localStorage.setItem("role","admin");
+localStorage.setItem("isAdmin","true");
+
+/* clear old data */
+localStorage.removeItem("playerName");
 
 window.location="game.html";
 
@@ -37,7 +20,10 @@ window.location="game.html";
 
 else if(pass === "race123"){
 
+/* ✅ PLAYER SETUP */
+
 localStorage.setItem("role","player");
+localStorage.setItem("isAdmin","false");
 
 window.location="team.html";
 
@@ -54,12 +40,10 @@ alert("Wrong password");
 function spectator(){
 
 localStorage.setItem("role","spectator");
+localStorage.setItem("isAdmin","false");
 
 window.location="game.html";
 
 }
 
 </script>
-
-</body>
-</html>
