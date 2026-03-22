@@ -8,6 +8,10 @@ const io = new Server(server);
 
 app.use(express.static("public"));
 
+app.get("/players", (req,res)=>{
+    res.json(players);
+});
+
 let players = [];
 let admin = null;
 let raceStarted = false;

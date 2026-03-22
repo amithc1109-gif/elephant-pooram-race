@@ -1,120 +1,82 @@
 body{
-
+margin:0;
 text-align:center;
 font-family:Arial;
-margin:0;
-
-background: linear-gradient(
-270deg,
-#ffcc00,
-#ff5733,
-#ff8c00,
-#ffcc00
-);
-
-background-size:800% 800%;
-
-animation:pooramGlow 20s ease infinite;
-
-}
-
-#track{
-
-width:100%;
-overflow-x:auto;
-
-}
-
-.festivalBanner{
-
-font-size:20px;
-color:white;
-background:#8B0000;
-padding:8px;
-border-radius:10px;
-margin-bottom:10px;
-
-}
-
-@keyframes pooramGlow{
-
-0%{background-position:0% 50%}
-50%{background-position:100% 50%}
-100%{background-position:0% 50%}
-
-}
-
-.lane{
-
-min-width:1500px;
-height:120px;
-border-bottom:2px dashed gray;
-position:relative;
-
-}
-
-.start{
-
-position:absolute;
-left:0;
-width:6px;
-background:green;
-top:0;
-bottom:0;
-
-}
-
-.finish{
-
-position:absolute;
-right:0;
-width:6px;
-background:red;
-top:0;
-bottom:0;
-
-}
-
-.elephant{
-
-position:absolute;
-top:40px;
-font-size:60px;
-transform:scaleX(-1);
-transition:left 0.1s linear;
-
+background:linear-gradient(90deg,#ffcc00,#ff5733);
 }
 
 button{
-
-font-size:22px;
-padding:16px 26px;
-margin:10px;
-border:none;
-border-radius:10px;
-background:#ff6b00;
-color:white;
-touch-action:manipulation;
-
+    padding:10px 15px;
+    margin:5px;
+    border:none;
+    border-radius:8px;
+    background:#ff5722;
+    color:white;   /* 🔥 FIX: THIS WAS MISSING */
+    font-weight:bold;
+    cursor:pointer;
 }
 
-.lane span{
+button:disabled{
+    background:gray;
+}
 
-font-size:20px;
-font-weight:bold;
-
+#camera{
+width:100%;
+height:300px;
+overflow:hidden;
+position:relative;
+border:4px solid #8B0000;
+background:white;
 }
 
 #track{
-overflow-x: auto;
-scroll-behavior: smooth;
+position:relative;
+width:1200px;
+}
+
+.lane{
+position:relative;
+height:80px;
+border-bottom:2px dashed gray;
+}
+
+.lane-info{
+position:absolute;
+left:50%;
+transform:translateX(-50%);
+top:5px;
+font-size:14px;
+}
+
+.start{
+position:absolute;
+left:0;
+width:5px;
+background:green;
+top:0;
+bottom:0;
+}
+
+.finish{
+position:absolute;
+right:0;
+width:5px;
+background:red;
+top:0;
+bottom:0;
+}
+
+/* 🐘 FIX */
+
+.elephant{
+position:absolute;
+top:30px;
+font-size:40px;
 }
 
 #fireworks{
-
 position:fixed;
 top:0;
 left:0;
 pointer-events:none;
-
 }

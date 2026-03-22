@@ -4,35 +4,11 @@
 <head>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="stylesheet" href="style.css">
-
-<style>
-#names{
-margin-top:20px;
-}
-
-#names button{
-display:block;
-margin:10px auto;
-padding:12px 20px;
-font-size:16px;
-background:#ff5733;
-color:white;
-border:none;
-border-radius:8px;
-cursor:pointer;
-}
-
-#names button:hover{
-background:#c70039;
-}
-</style>
-
 </head>
 
 <body>
 
 <h2>Enter Paapaan Name</h2>
-
 <input id="paapaanInput" placeholder="Paapaan Name">
 
 <h3>Select Team</h3>
@@ -40,6 +16,7 @@ background:#c70039;
 <button onclick="showNames('vadakkekara')">വടക്കേക്കര</button>
 <button onclick="showNames('kizhakkekara')">കിഴക്കേക്കര</button>
 
+<h3>Select Elephant</h3>
 <div id="names"></div>
 
 <script>
@@ -64,7 +41,7 @@ kizhakkekara:[
 
 };
 
-function showNames(team){
+async function showNames(team){
 
 let paapaan = document.getElementById("paapaanInput").value;
 
@@ -74,32 +51,41 @@ if(!paapaan){
 }
 
 localStorage.setItem("paapaan", paapaan);
-localStorage.setItem("team", team);
 
 let container = document.getElementById("names");
-container.innerHTML = "<h3>Select Elephant</h3>"; // 👈 IMPORTANT VISUAL FIX
+container.innerHTML = "";
+
+/* GET CURRENT PLAYERS */
+let players = await fetch("/players").then(r=>r.json()).catch(()=>[]);
 
 teams[team].forEach(name => {
 
     let btn = document.createElement("button");
+    btn.innerText = name;
 
-    fetch("/players")
-    .then(r=>r.json())
-    .then(players=>{
+    /* CHECK IF TAKEN */
+    let taken = players.find(p => p.name === name);
 
-        let taken = players.find(p=>p.name===name);
+    if(taken){
+        btn.disabled = true;
+        btn.innerText += " ❌ Taken";
+    }
 
-        btn.innerText = taken ? name+" (Taken)" : name;
-        btn.disabled = taken;
+    btn.onclick = () => {
 
-    });
+        if(taken){
+            alert("Already taken!");
+            return;
+        }
 
-    btn.onclick = ()=>{
-        localStorage.setItem("playerName",name);
-        window.location="game.html";
+        localStorage.setItem("playerName", name);
+        localStorage.setItem("role", "player");
+
+        window.location = "game.html";
     };
 
     container.appendChild(btn);
+
 });
 
 }

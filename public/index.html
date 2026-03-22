@@ -16,34 +16,41 @@
 <button onclick="spectator()">Spectator</button>
 
 <script>
+
 function participant(){
 
-    let pass = prompt("Enter Password");
+let pass = prompt("Enter Password");
 
-    if(pass === "admin123"){
+if(pass === "admin123"){
 
-        localStorage.setItem("role","admin");
-        localStorage.setItem("isAdmin","true");
+localStorage.setItem("role","admin");
+localStorage.setItem("playerName","ADMIN"); // 🔥 IMPORTANT
 
-        window.location="game.html";
+window.location="game.html";
 
-    } else if(pass === "race123"){
+}
 
-        localStorage.setItem("role","player");
-        localStorage.setItem("isAdmin","false");
+else if(pass === "race123"){
 
-        window.location="team.html";
+localStorage.setItem("role","player");
 
-    } else{
-        alert("Wrong password");
-    }
+window.location="team.html";
+
+}
+
+else{
+alert("Wrong password");
+}
+
 }
 
 function spectator(){
-    localStorage.setItem("role","spectator");
-    localStorage.setItem("isAdmin","false");
-    window.location="game.html";
+
+localStorage.setItem("role","spectator");
+window.location="game.html";
+
 }
+
 </script>
 
 </body>
