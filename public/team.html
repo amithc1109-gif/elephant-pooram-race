@@ -82,18 +82,24 @@ container.innerHTML = "<h3>Select Elephant</h3>"; // 👈 IMPORTANT VISUAL FIX
 teams[team].forEach(name => {
 
     let btn = document.createElement("button");
-    btn.innerText = name;
 
-    btn.onclick = () => {
+    fetch("/players")
+    .then(r=>r.json())
+    .then(players=>{
 
-        localStorage.setItem("playerName", name);
-        localStorage.setItem("role", "player");
+        let taken = players.find(p=>p.name===name);
 
-        window.location = "game.html";
+        btn.innerText = taken ? name+" (Taken)" : name;
+        btn.disabled = taken;
+
+    });
+
+    btn.onclick = ()=>{
+        localStorage.setItem("playerName",name);
+        window.location="game.html";
     };
 
     container.appendChild(btn);
-
 });
 
 }

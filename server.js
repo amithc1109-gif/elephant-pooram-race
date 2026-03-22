@@ -12,40 +12,32 @@ let players = [];
 let admin = null;
 let raceStarted = false;
 let finishOrder = [];
+let timer = null;
 
 const FINISH = 1200;
+const RACE_TIME = 60;
 
 io.on("connection", (socket) => {
-
-    console.log("User connected:", socket.id);
 
     socket.on("join", (data) => {
 
         const { name, paapaan, role } = data;
 
-        /* ADMIN */
-        if (role === "admin") {
+        if(role === "admin"){
             admin = socket.id;
             socket.emit("admin");
-
-            // send players so admin can see track
             socket.emit("players", players);
             return;
         }
 
-        /* SPECTATOR */
-        if (role === "spectator") {
+        if(role === "spectator"){
             socket.emit("players", players);
             return;
         }
 
-        /* PLAYER */
-
-        if (!name) return;
-
-        // prevent duplicate names
+        // 🚫 BLOCK DUPLICATE ELEPHANT
         let exists = players.find(p => p.name === name);
-        if (exists) {
+        if(exists){
             socket.emit("nameTaken");
             return;
         }
@@ -54,45 +46,41 @@ io.on("connection", (socket) => {
             id: socket.id,
             name,
             paapaan,
-            position: 0
+            position: 0,
+            points: 0
         });
 
         io.emit("players", players);
     });
 
-    /* MOVE */
     socket.on("move", () => {
 
-        if (!raceStarted) return;
+        if(!raceStarted) return;
 
         let player = players.find(p => p.id === socket.id);
-        if (!player) return;
+        if(!player) return;
 
         player.position += 25;
 
-        if (player.position >= FINISH) {
+        if(player.position >= FINISH){
 
             player.position = FINISH;
 
-            if (!finishOrder.find(p => p.id === player.id)) {
+            if(!finishOrder.find(p=>p.id === player.id)){
                 finishOrder.push(player);
             }
 
-            if (finishOrder.length === 3) {
-                raceStarted = false;
-                io.emit("top3", finishOrder);
+            if(finishOrder.length === players.length){
+                endRace();
             }
         }
 
         io.emit("positions", players);
     });
 
-    /* START */
     socket.on("startRace", () => {
 
-        if (socket.id !== admin) return;
-
-        console.log("Race started by admin");
+        if(socket.id !== admin) return;
 
         players.forEach(p => p.position = 0);
         finishOrder = [];
@@ -100,39 +88,59 @@ io.on("connection", (socket) => {
         io.emit("positions", players);
         io.emit("countdown");
 
-        setTimeout(() => {
+        setTimeout(()=>{
             raceStarted = true;
-        }, 3000);
+
+            let timeLeft = RACE_TIME;
+
+            io.emit("timer", timeLeft);
+
+            timer = setInterval(()=>{
+                timeLeft--;
+                io.emit("timer", timeLeft);
+
+                if(timeLeft <= 0){
+                    clearInterval(timer);
+                    endRace();
+                }
+
+            },1000);
+
+        },3000);
     });
 
-    /* RESET */
-    socket.on("resetRace", () => {
-
-        if (socket.id !== admin) return;
-
-        console.log("Race reset");
+    function endRace(){
 
         raceStarted = false;
-        finishOrder = [];
+        clearInterval(timer);
 
-        players.forEach(p => p.position = 0);
+        // 🏆 SORT
+        let sorted = [...players].sort((a,b)=>b.position - a.position);
 
-        io.emit("positions", players);
+        // 🎯 POINTS
+        sorted.forEach((p,i)=>{
+            if(i===0) p.points += 20;
+            else if(i===1) p.points += 15;
+            else if(i===2) p.points += 10;
+            else p.points += 5;
+        });
+
+        io.emit("top3", sorted.slice(0,3));
+        io.emit("leaderboard", sorted);
+    }
+
+    socket.on("removePlayer", (id)=>{
+        if(socket.id !== admin) return;
+
+        players = players.filter(p=>p.id !== id);
+        io.emit("players", players);
     });
 
-    socket.on("disconnect", () => {
-
-        players = players.filter(p => p.id !== socket.id);
-
-        if(socket.id === admin){
-            admin = null;
-        }
-
+    socket.on("disconnect", ()=>{
+        players = players.filter(p=>p.id !== socket.id);
         io.emit("players", players);
     });
 
 });
 
-server.listen(process.env.PORT || 3000, () => {
-    console.log("Server running...");
-});
+server.listen(process.env.PORT || 3000);
