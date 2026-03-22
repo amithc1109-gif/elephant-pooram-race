@@ -177,10 +177,17 @@ io.on("connection", (socket) => {
         let sorted = [...players].sort((a,b)=>b.position - a.position);
 
         sorted.forEach((p,i)=>{
-            if(i===0) p.points += 20;
-            else if(i===1) p.points += 15;
+            if(i===0) p.points += 15;
+            else if(i===1) p.points += 12;
             else if(i===2) p.points += 10;
-            else p.points += 5;
+            else if(i===3) p.points += 8;
+            else if(i===4) p.points += 7;
+            else if(i===5) p.points += 6;
+            else if(i===6) p.points += 5;
+            else if(i===7) p.points += 4;
+            else if(i===8) p.points += 2;
+            else if(i===9) p.points += 1;
+            else p.points += 0;
         });
 
         io.emit("top3", sorted.slice(0,3));

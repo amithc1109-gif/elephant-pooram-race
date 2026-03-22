@@ -139,26 +139,27 @@ socket.on("top3",(list)=>{
 
 socket.on("leaderboard",(list)=>{
 
-    let board = document.getElementById("leaderboard");
-    if(!board) return;
-
     let html = "<h3>Leaderboard</h3>";
 
     list.forEach((p,i)=>{
         html += `${i+1}. ${p.name} - ${p.points} pts<br>`;
     });
 
-    board.innerHTML = html;
+    document.getElementById("leaderboard").innerHTML = html;
 
-    /* BET RESULT */
+    /* ✅ FIXED BET CHECK */
     if(role==="spectator" && myBet){
-        if(myBet === list[0]?.name){
-            alert("🎉 You WON your bet!");
+
+        let winner = list[0].name.trim();
+        let bet = myBet.trim();
+
+        if(bet === winner){
+            setTimeout(()=> alert("🎉 You WON your bet!"), 200);
         } else{
-            alert("❌ You lost your bet");
+            setTimeout(()=> alert("❌ You lost your bet"), 200);
         }
-        myBet = null;
     }
+
 });
 
 /* BET */
@@ -172,9 +173,10 @@ function placeBet(){
 
     myBet = val.value;
 
+    val.disabled = true;
+
     alert("Bet locked: " + myBet);
 }
-
 /* DRAW */
 
 function draw(){
