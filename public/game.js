@@ -59,7 +59,7 @@ socket.on("players",(data)=>{
 
         data.forEach(p=>{
             let o = document.createElement("option");
-            o.value = p.name;
+            o.value = p.id;
             o.text = p.name;
             bet.appendChild(o);
         });
@@ -147,13 +147,12 @@ socket.on("leaderboard",(list)=>{
 
     document.getElementById("leaderboard").innerHTML = html;
 
-    /* ✅ FIXED BET CHECK */
+    /* ✅ PERFECT BET CHECK */
     if(role==="spectator" && myBet){
 
-        let winner = list[0].name.trim();
-        let bet = myBet.trim();
+        let winnerId = list[0].id;
 
-        if(bet === winner){
+        if(myBet === winnerId){
             setTimeout(()=> alert("🎉 You WON your bet!"), 200);
         } else{
             setTimeout(()=> alert("❌ You lost your bet"), 200);
@@ -161,7 +160,6 @@ socket.on("leaderboard",(list)=>{
     }
 
 });
-
 /* BET */
 
 function placeBet(){
@@ -171,11 +169,11 @@ function placeBet(){
     let val = document.getElementById("betChoice");
     if(!val) return;
 
-    myBet = val.value;
+    myBet = val.value;   // now stores PLAYER ID
 
     val.disabled = true;
 
-    alert("Bet locked: " + myBet);
+    alert("Bet locked!");
 }
 /* DRAW */
 
