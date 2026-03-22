@@ -64,6 +64,12 @@ height:80px;
 border-bottom:2px dashed gray;
 }
 
+.boost{
+    position:absolute;
+    top:45px;
+    font-size:28px;
+}
+
 .lane-info{
 position:absolute;
 left:50%;

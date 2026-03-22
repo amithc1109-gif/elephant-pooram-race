@@ -19,7 +19,7 @@ let finishOrder = [];
 
 let timer = null;
 let timeLeft = 60;
-
+let boosts = [];
 const FINISH = 1200;
 
 io.on("connection", (socket) => {
@@ -68,7 +68,14 @@ io.on("connection", (socket) => {
 
     /* MOVE */
     socket.on("move", () => {
+    let boost = boosts.find(b => b.playerId === player.id && !b.used);
 
+if(boost && player.position >= boost.position){
+    player.position += 100;   // 🚀 BOOST
+    boost.used = true;
+
+    io.emit("boostTaken", player.id);
+}
         if(!raceStarted) return;
 
         let player = players.find(p => p.id === socket.id);
@@ -93,7 +100,13 @@ io.on("connection", (socket) => {
 
     /* START RACE */
     socket.on("startRace", () => {
+    boosts = players.map(p => ({
+    playerId: p.id,
+    position: Math.floor(Math.random() * 800) + 200,
+    used: false
+}));
 
+io.emit("boosts", boosts);
         if(socket.id !== admin) return;
 
         // clear old timer
