@@ -204,7 +204,10 @@ function draw(){
                 🐘
             </div>
 
-            ${role==="admin" ? `<button onclick="removePlayer('${p.id}')">❌</button>` : ""}
+            ${role==="admin" ? `
+<button class="remove-btn" onclick="removePlayer('${p.id}')">
+❌
+</button>` : ""}
 
         </div>
         `;
@@ -214,12 +217,17 @@ function draw(){
 
     /* 📱 AUTO CAMERA FOLLOW */
     let me = players.find(p=>p.name === playerName);
-    if(me){
-        let cam = document.getElementById("camera");
-        if(cam){
-            cam.scrollLeft = me.position - 150;
-        }
+if(me){
+    let cam = document.getElementById("camera");
+
+    if(cam){
+
+        let target = me.position - cam.clientWidth / 2;
+
+        // smooth follow (not aggressive)
+        cam.scrollLeft += (target - cam.scrollLeft) * 0.1;
     }
+}
 }
 
 /* REMOVE PLAYER */

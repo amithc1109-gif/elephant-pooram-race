@@ -22,16 +22,19 @@ button:disabled{
 
 #camera{
 width:100%;
-height:300px;
-overflow:hidden;
+height:1500px;
+overflow-x:auto;   /* 🔥 allow manual scroll */
+overflow-y:hidden;
 position:relative;
 border:4px solid #8B0000;
 background:white;
+overflow-x:auto;   /* 🔥 allow manual scroll */
+    overflow-y:hidden;
 }
 
 #track{
 position:relative;
-width:1200px;
+width:1600px;
 }
 
 .lane{
@@ -46,6 +49,19 @@ left:50%;
 transform:translateX(-50%);
 top:5px;
 font-size:14px;
+}
+
+.remove-btn{
+    position:absolute;
+    right:10px;
+    top:20px;
+    background:red;
+    color:white;
+    border:none;
+    padding:5px 8px;
+    border-radius:5px;
+    cursor:pointer;
+    z-index:10;
 }
 
 .start{
@@ -72,6 +88,7 @@ bottom:0;
 position:absolute;
 top:30px;
 font-size:40px;
+    transform: scaleX(-1); /* 🔥 flip direction */
 }
 
 #fireworks{
