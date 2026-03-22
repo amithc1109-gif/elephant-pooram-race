@@ -2,10 +2,30 @@
 <html>
 
 <head>
-
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="stylesheet" href="style.css">
+
+<style>
+#names{
+margin-top:20px;
+}
+
+#names button{
+display:block;
+margin:10px auto;
+padding:12px 20px;
+font-size:16px;
+background:#ff5733;
+color:white;
+border:none;
+border-radius:8px;
+cursor:pointer;
+}
+
+#names button:hover{
+background:#c70039;
+}
+</style>
 
 </head>
 
@@ -24,7 +44,7 @@
 
 <script>
 
-const teams={
+const teams = {
 
 vadakkekara:[
 "മണ്ണന്തല അച്ചു",
@@ -46,55 +66,33 @@ kizhakkekara:[
 
 function showNames(team){
 
-let paapaan=document.getElementById("paapaanInput").value;
+let paapaan = document.getElementById("paapaanInput").value;
 
 if(!paapaan){
-
-alert("Please enter Paapaan name");
-
-return;
-
+    alert("Enter Paapaan name");
+    return;
 }
 
-localStorage.setItem("paapaan",paapaan);
-localStorage.setItem("team",team);
+localStorage.setItem("paapaan", paapaan);
+localStorage.setItem("team", team);
 
-let container=document.getElementById("names");
+let container = document.getElementById("names");
+container.innerHTML = "<h3>Select Elephant</h3>"; // 👈 IMPORTANT VISUAL FIX
 
-container.innerHTML="";
+teams[team].forEach(name => {
 
-/* GET TAKEN ELEPHANTS */
+    let btn = document.createElement("button");
+    btn.innerText = name;
 
-fetch("/players")
-.then(res=>res.json())
-.then(players=>{
+    btn.onclick = () => {
 
-teams[team].forEach(name=>{
+        localStorage.setItem("playerName", name);
+        localStorage.setItem("role", "player");
 
-let btn=document.createElement("button");
+        window.location = "game.html";
+    };
 
-btn.innerText=name;
-
-let taken=players.find(p=>p.name===name);
-
-if(taken){
-
-btn.disabled=true;
-btn.innerText=name+" (Taken)";
-
-}
-
-btn.onclick=()=>{
-
-localStorage.setItem("playerName",name);
-
-window.location="game.html";
-
-};
-
-container.appendChild(btn);
-
-});
+    container.appendChild(btn);
 
 });
 
