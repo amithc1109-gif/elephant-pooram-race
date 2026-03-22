@@ -2,23 +2,19 @@ const socket = io();
 
 const role = localStorage.getItem("role");
 const playerName = localStorage.getItem("playerName");
+const paapaan = localStorage.getItem("paapaan"); // ✅ FIX
 
 let players = [];
 let canRun = false;
 let myBet = null;
 
 /* JOIN */
-/* JOIN */
 
 if(role === "admin"){
-    socket.emit("join", {
-        role: "admin"
-    });
+    socket.emit("join", { role: "admin" });
 }
 else if(role === "spectator"){
-    socket.emit("join", {
-        role: "spectator"
-    });
+    socket.emit("join", { role: "spectator" });
 }
 else{
     socket.emit("join", {
@@ -28,19 +24,37 @@ else{
     });
 }
 
-/* ADMIN */
+/* ADMIN UI */
+
 socket.on("admin", ()=>{
-    document.getElementById("adminControls").style.display = "block";
-    document.getElementById("runBtn").style.display = "none";
+    let adminDiv = document.getElementById("adminControls");
+    let runBtn = document.getElementById("runBtn");
+
+    if(adminDiv) adminDiv.style.display = "block";
+    if(runBtn) runBtn.style.display = "none";
 });
 
 /* PLAYERS */
+
 socket.on("players",(data)=>{
+
+    console.log("PLAYERS:", data); // DEBUG
+
     players = data;
+
+    if(!players || players.length === 0){
+        let track = document.getElementById("track");
+        if(track) track.innerHTML = "<h3>No players joined yet</h3>";
+        return;
+    }
+
     draw();
 
+    /* BETTING LIST */
     if(role === "spectator"){
         let bet = document.getElementById("betChoice");
+        if(!bet) return;
+
         bet.innerHTML = "";
 
         data.forEach(p=>{
@@ -53,12 +67,14 @@ socket.on("players",(data)=>{
 });
 
 /* POSITIONS */
+
 socket.on("positions",(data)=>{
     players = data;
     draw();
 });
 
 /* RUN */
+
 function run(){
     if(role === "player" && canRun){
         socket.emit("move");
@@ -66,28 +82,39 @@ function run(){
 }
 
 /* ADMIN */
+
 function startRace(){ socket.emit("startRace"); }
 function resetRace(){ socket.emit("resetRace"); }
 
 /* TIMER */
+
 socket.on("timer",(t)=>{
+    let timerDiv = document.getElementById("timer");
+    if(!timerDiv) return;
+
     if(t < 0) t = 0;
-    document.getElementById("timer").innerHTML = "⏱ " + t + "s";
+    timerDiv.innerHTML = "⏱ " + t + "s";
 });
 
 /* COUNTDOWN */
+
 socket.on("countdown",()=>{
+
     canRun = false;
 
     let c=3;
 
     let i=setInterval(()=>{
-        document.getElementById("winner").innerHTML = c;
+
+        let win = document.getElementById("winner");
+        if(win) win.innerHTML = c;
+
         c--;
 
         if(c < 0){
             clearInterval(i);
-            document.getElementById("winner").innerHTML = "GO!";
+
+            if(win) win.innerHTML = "GO!";
             canRun = true;
         }
 
@@ -95,43 +122,65 @@ socket.on("countdown",()=>{
 });
 
 /* RESULTS */
+
 socket.on("top3",(list)=>{
-    document.getElementById("winner").innerHTML = `
-    🥇 ${list[0].name}<br>
-    🥈 ${list[1].name}<br>
-    🥉 ${list[2].name}
+
+    let win = document.getElementById("winner");
+    if(!win) return;
+
+    win.innerHTML = `
+    🥇 ${list[0]?.name || ""}<br>
+    🥈 ${list[1]?.name || ""}<br>
+    🥉 ${list[2]?.name || ""}
     `;
 });
 
 /* LEADERBOARD */
+
 socket.on("leaderboard",(list)=>{
+
+    let board = document.getElementById("leaderboard");
+    if(!board) return;
+
     let html = "<h3>Leaderboard</h3>";
 
     list.forEach((p,i)=>{
         html += `${i+1}. ${p.name} - ${p.points} pts<br>`;
     });
 
-    document.getElementById("leaderboard").innerHTML = html;
+    board.innerHTML = html;
 
+    /* BET RESULT */
     if(role==="spectator" && myBet){
-        if(myBet === list[0].name){
+        if(myBet === list[0]?.name){
             alert("🎉 You WON your bet!");
         } else{
             alert("❌ You lost your bet");
         }
+        myBet = null;
     }
 });
 
 /* BET */
+
 function placeBet(){
+
     if(role !== "spectator") return;
 
-    myBet = document.getElementById("betChoice").value;
+    let val = document.getElementById("betChoice");
+    if(!val) return;
+
+    myBet = val.value;
+
     alert("Bet locked: " + myBet);
 }
 
 /* DRAW */
+
 function draw(){
+
+    let track = document.getElementById("track");
+    if(!track) return;
 
     let html="";
 
@@ -161,16 +210,20 @@ function draw(){
         `;
     });
 
-    document.getElementById("track").innerHTML = html;
+    track.innerHTML = html;
 
-    // 📱 AUTO CAMERA
+    /* 📱 AUTO CAMERA FOLLOW */
     let me = players.find(p=>p.name === playerName);
     if(me){
-        document.getElementById("camera").scrollLeft = me.position - 100;
+        let cam = document.getElementById("camera");
+        if(cam){
+            cam.scrollLeft = me.position - 150;
+        }
     }
 }
 
-/* REMOVE */
+/* REMOVE PLAYER */
+
 function removePlayer(id){
     socket.emit("removePlayer", id);
 }
