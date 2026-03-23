@@ -8,23 +8,22 @@ const io = new Server(server);
 
 app.use(express.static("public"));
 
-app.get("/players", (req,res)=>{
-    res.json(players);
-});
-
 let players = [];
-let admin = null;
 let raceStarted = false;
 let finishOrder = [];
 
 let timer = null;
 let timeLeft = 60;
+
 let boosts = [];
+
 const FINISH = 1200;
 
 io.on("connection", (socket) => {
 
     console.log("Connected:", socket.id);
+
+    /* ================= JOIN ================= */
 
     socket.on("join", (data) => {
 
@@ -32,7 +31,6 @@ io.on("connection", (socket) => {
 
         /* ADMIN */
         if(role === "admin"){
-            admin = socket.id;
             socket.emit("admin");
             socket.emit("players", players);
             return;
@@ -66,22 +64,26 @@ io.on("connection", (socket) => {
         io.emit("players", players);
     });
 
-    /* MOVE */
+    /* ================= MOVE ================= */
+
     socket.on("move", () => {
-    let boost = boosts.find(b => b.playerId === player.id && !b.used);
 
-if(boost && player.position >= boost.position){
-    player.position += 100;   // 🚀 BOOST
-    boost.used = true;
-
-    io.emit("boostTaken", player.id);
-}
         if(!raceStarted) return;
 
         let player = players.find(p => p.id === socket.id);
         if(!player) return;
 
         player.position += 25;
+
+        /* 🥥 BOOST LOGIC */
+        let boost = boosts.find(b => b.playerId === player.id && !b.used);
+
+        if(boost && player.position >= boost.position){
+            player.position += 100;   // BOOST SPEED
+            boost.used = true;
+
+            io.emit("boostTaken", player.id);
+        }
 
         if(player.position >= FINISH){
             player.position = FINISH;
@@ -98,16 +100,13 @@ if(boost && player.position >= boost.position){
         io.emit("positions", players);
     });
 
-    /* START RACE */
-    socket.on("startRace", () => {
-    boosts = players.map(p => ({
-    playerId: p.id,
-    position: Math.floor(Math.random() * 800) + 200,
-    used: false
-}));
+    /* ================= START RACE ================= */
 
-io.emit("boosts", boosts);
-        if(socket.id !== admin) return;
+    socket.on("startRace", (data) => {
+
+        if(data?.role !== "admin") return;
+
+        console.log("Race started by admin");
 
         // clear old timer
         if(timer){
@@ -121,6 +120,14 @@ io.emit("boosts", boosts);
 
         players.forEach(p => p.position = 0);
 
+        /* 🥥 GENERATE BOOSTS */
+        boosts = players.map(p => ({
+            playerId: p.id,
+            position: Math.floor(Math.random() * 800) + 200,
+            used: false
+        }));
+
+        io.emit("boosts", boosts);
         io.emit("positions", players);
         io.emit("countdown");
 
@@ -146,10 +153,13 @@ io.emit("boosts", boosts);
         },3000);
     });
 
-    /* RESET */
-    socket.on("resetRace", () => {
+    /* ================= RESET RACE ================= */
 
-        if(socket.id !== admin) return;
+    socket.on("resetRace", (data) => {
+
+        if(data?.role !== "admin") return;
+
+        console.log("Race reset by admin");
 
         if(timer){
             clearInterval(timer);
@@ -159,24 +169,28 @@ io.emit("boosts", boosts);
         raceStarted = false;
         finishOrder = [];
         timeLeft = 60;
+        boosts = [];
 
         players.forEach(p=>{
             p.position = 0;
-            p.points = 0; // reset points
+            p.points = 0;
         });
 
         io.emit("positions", players);
         io.emit("timer", timeLeft);
         io.emit("leaderboard", []);
+        io.emit("boosts", boosts);
     });
 
-    /* REMOVE PLAYER */
+    /* ================= REMOVE PLAYER ================= */
+
     socket.on("removePlayer", (id)=>{
-        if(socket.id !== admin) return;
 
         players = players.filter(p => p.id !== id);
         io.emit("players", players);
     });
+
+    /* ================= END RACE ================= */
 
     function endRace(){
 
@@ -189,7 +203,8 @@ io.emit("boosts", boosts);
 
         let sorted = [...players].sort((a,b)=>b.position - a.position);
 
-        sorted.forEach((p,i)=>{
+        /* 🏆 POINT SYSTEM (EDIT HERE IF NEEDED) */
+sorted.forEach((p,i)=>{
             if(i===0) p.points += 15;
             else if(i===1) p.points += 12;
             else if(i===2) p.points += 10;
@@ -207,17 +222,18 @@ io.emit("boosts", boosts);
         io.emit("leaderboard", sorted);
     }
 
-    socket.on("disconnect", ()=>{
-        players = players.filter(p => p.id !== socket.id);
+    /* ================= DISCONNECT ================= */
 
-        if(socket.id === admin){
-            admin = null;
-        }
+    socket.on("disconnect", ()=>{
+
+        players = players.filter(p => p.id !== socket.id);
 
         io.emit("players", players);
     });
 
 });
+
+/* ================= SERVER ================= */
 
 server.listen(process.env.PORT || 3000, ()=>{
     console.log("Server running...");
