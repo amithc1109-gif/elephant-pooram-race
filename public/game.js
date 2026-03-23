@@ -2,13 +2,13 @@ const socket = io();
 
 const role = localStorage.getItem("role");
 const playerName = localStorage.getItem("playerName");
-const paapaan = localStorage.getItem("paapaan"); // ✅ FIX
+const paapaan = localStorage.getItem("paapaan");
 
 let players = [];
 let canRun = false;
 let myBet = null;
-let boosts = [];
-/* JOIN */
+
+/* ================= JOIN (FIXED) ================= */
 
 if(role === "admin"){
     socket.emit("join", { role: "admin" });
@@ -24,33 +24,23 @@ else{
     });
 }
 
-/* ADMIN UI */
+/* ================= ADMIN ================= */
 
 socket.on("admin", ()=>{
-    let adminDiv = document.getElementById("adminControls");
-    let runBtn = document.getElementById("runBtn");
-
-    if(adminDiv) adminDiv.style.display = "block";
-    if(runBtn) runBtn.style.display = "none";
+    document.getElementById("adminControls").style.display = "block";
+    document.getElementById("runBtn").style.display = "none";
 });
 
-/* PLAYERS */
+/* ================= PLAYERS ================= */
 
 socket.on("players",(data)=>{
 
-    console.log("PLAYERS:", data); // DEBUG
+    console.log("PLAYERS:", data); // 🔥 DEBUG
 
     players = data;
 
-    if(!players || players.length === 0){
-        let track = document.getElementById("track");
-        if(track) track.innerHTML = "<h3>No players joined yet</h3>";
-        return;
-    }
-
     draw();
 
-    /* BETTING LIST */
     if(role === "spectator"){
         let bet = document.getElementById("betChoice");
         if(!bet) return;
@@ -59,21 +49,21 @@ socket.on("players",(data)=>{
 
         data.forEach(p=>{
             let o = document.createElement("option");
-            o.value = p.id;
+            o.value = p.name;
             o.text = p.name;
             bet.appendChild(o);
         });
     }
 });
 
-/* POSITIONS */
+/* ================= POSITIONS ================= */
 
 socket.on("positions",(data)=>{
     players = data;
     draw();
 });
 
-/* RUN */
+/* ================= RUN ================= */
 
 function run(){
     if(role === "player" && canRun){
@@ -81,68 +71,55 @@ function run(){
     }
 }
 
-/* ADMIN */
+/* ================= ADMIN ACTIONS ================= */
 
-function startRace(){ socket.emit("startRace"); }
-function resetRace(){ socket.emit("resetRace"); }
+function startRace(){
+    socket.emit("startRace", { role: "admin" });
+}
 
-/* TIMER */
+function resetRace(){
+    socket.emit("resetRace", { role: "admin" });
+}
+
+/* ================= TIMER ================= */
 
 socket.on("timer",(t)=>{
-    let timerDiv = document.getElementById("timer");
-    if(!timerDiv) return;
-
-    if(t < 0) t = 0;
-    timerDiv.innerHTML = "⏱ " + t + "s";
+    let el = document.getElementById("timer");
+    if(el) el.innerHTML = "⏱ " + t + "s";
 });
 
-/* COUNTDOWN */
+/* ================= COUNTDOWN ================= */
 
 socket.on("countdown",()=>{
 
     canRun = false;
 
-    let c=3;
+    let c = 3;
 
-    let i=setInterval(()=>{
-
-        let win = document.getElementById("winner");
-        if(win) win.innerHTML = c;
-
+    let i = setInterval(()=>{
+        document.getElementById("winner").innerHTML = c;
         c--;
 
         if(c < 0){
             clearInterval(i);
-
-            if(win) win.innerHTML = "GO!";
+            document.getElementById("winner").innerHTML = "GO!";
             canRun = true;
         }
 
     },1000);
 });
 
-socket.on("boostTaken",(playerId)=>{
-    boosts = boosts.map(b=>{
-        if(b.playerId === playerId) b.used = true;
-        return b;
-    });
-});
-
-/* RESULTS */
+/* ================= RESULTS ================= */
 
 socket.on("top3",(list)=>{
-
-    let win = document.getElementById("winner");
-    if(!win) return;
-
-    win.innerHTML = `
-    🥇 ${list[0]?.name || ""}<br>
-    🥈 ${list[1]?.name || ""}<br>
-    🥉 ${list[2]?.name || ""}
+    document.getElementById("winner").innerHTML = `
+        🥇 ${list[0]?.name || ""}
+        <br>🥈 ${list[1]?.name || ""}
+        <br>🥉 ${list[2]?.name || ""}
     `;
 });
 
-/* LEADERBOARD */
+/* ================= LEADERBOARD ================= */
 
 socket.on("leaderboard",(list)=>{
 
@@ -152,22 +129,19 @@ socket.on("leaderboard",(list)=>{
         html += `${i+1}. ${p.name} - ${p.points} pts<br>`;
     });
 
-    document.getElementById("leaderboard").innerHTML = html;
+    let lb = document.getElementById("leaderboard");
+    if(lb) lb.innerHTML = html;
 
-    /* ✅ PERFECT BET CHECK */
     if(role==="spectator" && myBet){
-
-        let winnerId = list[0].id;
-
-        if(myBet === winnerId){
-            setTimeout(()=> alert("🎉 You WON your bet!"), 200);
+        if(myBet === list[0]?.name){
+            alert("🎉 You WON your bet!");
         } else{
-            setTimeout(()=> alert("❌ You lost your bet"), 200);
+            alert("❌ You lost your bet");
         }
     }
-
 });
-/* BET */
+
+/* ================= BET ================= */
 
 function placeBet(){
 
@@ -176,20 +150,24 @@ function placeBet(){
     let val = document.getElementById("betChoice");
     if(!val) return;
 
-    myBet = val.value;   // now stores PLAYER ID
+    myBet = val.value;
 
-    val.disabled = true;
-
-    alert("Bet locked!");
+    alert("Bet locked: " + myBet);
 }
-/* DRAW */
+
+/* ================= DRAW (CRITICAL FIX) ================= */
 
 function draw(){
 
     let track = document.getElementById("track");
     if(!track) return;
 
-    let html="";
+    if(players.length === 0){
+        track.innerHTML = "<p>No players joined yet...</p>";
+        return;
+    }
+
+    let html = "";
 
     players.forEach((p,i)=>{
 
@@ -200,23 +178,18 @@ function draw(){
 
             <div class="start"></div>
             <div class="finish"></div>
-            let boost = boosts.find(b => b.playerId === p.id && !b.used);
+
             <div class="lane-info">
                 Lane ${i+1} ${isMe ? "⭐ YOU":""}<br>
                 ${p.name}<br>
                 ${p.paapaan || ""}
             </div>
 
-            <div class="elephant" style="left:${p.position}px;">
+            <div class="elephant" style="left:${p.position}px; transform: scaleX(-1);">
                 🐘
             </div>
-            ${boost ? `
-<div class="boost" style="left:${boost.position}px;">🥥</div>
-` : ""}
-            ${role==="admin" ? `
-<button class="remove-btn" onclick="removePlayer('${p.id}')">
-❌
-</button>` : ""}
+
+            ${role==="admin" ? `<button onclick="removePlayer('${p.id}')">❌</button>` : ""}
 
         </div>
         `;
@@ -224,22 +197,14 @@ function draw(){
 
     track.innerHTML = html;
 
-    /* 📱 AUTO CAMERA FOLLOW */
+    /* 📱 CAMERA FOLLOW */
     let me = players.find(p=>p.name === playerName);
-if(me){
-    let cam = document.getElementById("camera");
-
-    if(cam){
-
-        let target = me.position - cam.clientWidth / 2;
-
-        // smooth follow (not aggressive)
-        cam.scrollLeft += (target - cam.scrollLeft) * 0.1;
+    if(me){
+        document.getElementById("camera").scrollLeft = me.position - 100;
     }
 }
-}
 
-/* REMOVE PLAYER */
+/* ================= REMOVE PLAYER ================= */
 
 function removePlayer(id){
     socket.emit("removePlayer", id);
