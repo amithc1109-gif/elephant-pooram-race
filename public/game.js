@@ -8,6 +8,17 @@ let players = [];
 let canRun = false;
 let myBet = null;
 
+/* 🚫 iOS DOUBLE TAP ZOOM FIX */
+let lastTouchEnd = 0;
+
+document.addEventListener('touchend', function (event) {
+let now = (new Date()).getTime();
+if (now - lastTouchEnd <= 300) {
+event.preventDefault();
+}
+lastTouchEnd = now;
+}, false);
+
 /* ================= JOIN (FIXED) ================= */
 
 if(role === "admin"){
@@ -123,24 +134,46 @@ socket.on("top3",(list)=>{
 
 socket.on("leaderboard",(list)=>{
 
-    let html = "<h3>Leaderboard</h3>";
+/* SORT SAFETY (IMPORTANT) */
+list.sort((a,b)=>b.points - a.points);
 
-    list.forEach((p,i)=>{
-        html += `${i+1}. ${p.name} - ${p.points} pts<br>`;
-    });
+/* PODIUM (TOP 3) */
+let html = `
+<h3>🏆 Leaderboard</h3>
 
-    let lb = document.getElementById("leaderboard");
-    if(lb) lb.innerHTML = html;
+<div style="font-size:20px; margin-bottom:10px;">
+🥇 ${list[0]?.name || ""} - ${list[0]?.points || 0} pts<br>
+🥈 ${list[1]?.name || ""} - ${list[1]?.points || 0} pts<br>
+🥉 ${list[2]?.name || ""} - ${list[2]?.points || 0} pts
+</div>
 
-    if(role==="spectator" && myBet){
-        if(myBet === list[0]?.name){
-            alert("🎉 You WON your bet!");
-        } else{
-            alert("❌ You lost your bet");
-        }
-    }
+<hr>
+`;
+
+/* TOP 10 LIST */
+html += "<div style='font-size:18px;'>";
+
+list.slice(0,10).forEach((p,i)=>{
+    html += `${i+1}. ${p.name} - ${p.points} pts<br>`;
 });
 
+html += "</div>";
+
+let lb = document.getElementById("leaderboard");
+if(lb) lb.innerHTML = html;
+
+/* BET RESULT (ONLY SPECTATOR) */
+if(role==="spectator" && myBet){
+
+if(myBet === list[0]?.name){
+alert("🎉 You WON your bet!");
+}else{
+alert("❌ You lost your bet");
+}
+
+}
+
+});
 /* ================= BET ================= */
 
 function placeBet(){
@@ -197,11 +230,19 @@ function draw(){
 
     track.innerHTML = html;
 
-    /* 📱 CAMERA FOLLOW */
-    let me = players.find(p=>p.name === playerName);
-    if(me){
-        document.getElementById("camera").scrollLeft = me.position - 100;
-    }
+/* 📱 CAMERA FOLLOW */
+let me = players.find(p=>p.name === playerName);
+
+if(me){
+let cam = document.getElementById("camera");
+
+if(cam){
+cam.scrollTo({
+left: me.position - 120,
+behavior: "smooth"
+});
+}
+}
 }
 
 /* ================= REMOVE PLAYER ================= */

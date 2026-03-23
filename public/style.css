@@ -11,9 +11,13 @@ button{
     border:none;
     border-radius:8px;
     background:#ff5722;
-    color:white;   /* 🔥 FIX: THIS WAS MISSING */
+    color:white;
     font-weight:bold;
     cursor:pointer;
+
+    /* 🔥 FIX FOR iOS ZOOM */
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
 }
 
 button:disabled{
