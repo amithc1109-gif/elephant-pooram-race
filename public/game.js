@@ -222,7 +222,7 @@ function draw(){
                 🐘
             </div>
 
-           remove${role==="admin" ? `
+${role==="admin" ? `
 <div class="remove-container">
     <button class="remove-btn" onclick="removePlayer('${p.id}')">❌</button>
 </div>
@@ -252,5 +252,8 @@ behavior: "smooth"
 /* ================= REMOVE PLAYER ================= */
 
 function removePlayer(id){
-    socket.emit("removePlayer", id);
+    socket.emit("removePlayer", {
+        id: id,
+        role: "admin"
+    });
 }

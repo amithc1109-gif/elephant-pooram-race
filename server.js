@@ -193,16 +193,16 @@ io.on("connection", (socket) => {
 
     /* ================= REMOVE PLAYER ================= */
 
-    socket.on("removePlayer", (id, data)=>{
+socket.on("removePlayer", (data)=>{
 
-        if(data?.role !== "admin") return;
+    if(!data || data.role !== "admin") return;
 
-        players = players.filter(p => p.id !== id);
+    players = players.filter(p => p.id !== data.id);
 
-        io.emit("players", players);
-    });
+    io.emit("players", players);
+});
 
-function removePlayer(id){
+ function removePlayer(id){
     socket.emit("removePlayer", id, { role: "admin" });
 }
     
