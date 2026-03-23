@@ -8,7 +8,9 @@ const io = new Server(server);
 
 app.use(express.static("public"));
 
-let players = [];
+/* ================= GLOBAL STATE ================= */
+
+let players = [];   // ✅ FIX: declared BEFORE API
 let raceStarted = false;
 let finishOrder = [];
 
@@ -18,6 +20,14 @@ let timeLeft = 60;
 let boosts = [];
 
 const FINISH = 1200;
+
+/* ================= API (FOR TEAM PAGE) ================= */
+
+app.get("/players", (req, res) => {
+    res.json(players);
+});
+
+/* ================= SOCKET ================= */
 
 io.on("connection", (socket) => {
 
@@ -79,7 +89,7 @@ io.on("connection", (socket) => {
         let boost = boosts.find(b => b.playerId === player.id && !b.used);
 
         if(boost && player.position >= boost.position){
-            player.position += 100;   // BOOST SPEED
+            player.position += 100;
             boost.used = true;
 
             io.emit("boostTaken", player.id);
@@ -108,7 +118,6 @@ io.on("connection", (socket) => {
 
         console.log("Race started by admin");
 
-        // clear old timer
         if(timer){
             clearInterval(timer);
             timer = null;
@@ -184,9 +193,12 @@ io.on("connection", (socket) => {
 
     /* ================= REMOVE PLAYER ================= */
 
-    socket.on("removePlayer", (id)=>{
+    socket.on("removePlayer", (id, data)=>{
+
+        if(data?.role !== "admin") return;
 
         players = players.filter(p => p.id !== id);
+
         io.emit("players", players);
     });
 
@@ -203,8 +215,8 @@ io.on("connection", (socket) => {
 
         let sorted = [...players].sort((a,b)=>b.position - a.position);
 
-        /* 🏆 POINT SYSTEM (EDIT HERE IF NEEDED) */
-sorted.forEach((p,i)=>{
+        /* 🏆 POINT SYSTEM */
+        sorted.forEach((p,i)=>{
             if(i===0) p.points += 15;
             else if(i===1) p.points += 12;
             else if(i===2) p.points += 10;
@@ -215,7 +227,6 @@ sorted.forEach((p,i)=>{
             else if(i===7) p.points += 4;
             else if(i===8) p.points += 2;
             else if(i===9) p.points += 1;
-            else p.points += 0;
         });
 
         io.emit("top3", sorted.slice(0,3));
