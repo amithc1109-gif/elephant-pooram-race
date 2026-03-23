@@ -222,7 +222,11 @@ function draw(){
                 🐘
             </div>
 
-            ${role==="admin" ? `<button onclick="removePlayer('${p.id}')">❌</button>` : ""}
+           remove${role==="admin" ? `
+<div class="remove-container">
+    <button class="remove-btn" onclick="removePlayer('${p.id}')">❌</button>
+</div>
+` : ""}
 
         </div>
         `;
