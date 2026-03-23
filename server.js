@@ -202,6 +202,10 @@ io.on("connection", (socket) => {
         io.emit("players", players);
     });
 
+function removePlayer(id){
+    socket.emit("removePlayer", id, { role: "admin" });
+}
+    
     /* ================= END RACE ================= */
 
     function endRace(){
