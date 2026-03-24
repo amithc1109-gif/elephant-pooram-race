@@ -223,21 +223,16 @@ socket.on("removePlayer", (data)=>{
             timer = null;
         }
 
- // ❗ CHECK: Did all players finish?
-    let allFinished = finishOrder.length === players.length;
+    // ✅ Finished players (in order)
+    let finishedPlayers = [...finishOrder];
 
-    if(!allFinished){
+    // ❌ Not finished players
+    let notFinished = players.filter(p => 
+        !finishOrder.find(f => f.id === p.id)
+    );
 
-        // ❌ TIMER ENDED EARLY → NO POINTS
-        players.forEach(p => p.points += 0);
-        io.emit("leaderboard", players);
-
-        return;
-    }
-
-
-        /* 🏆 POINT SYSTEM */
-        finishOrder.forEach((p,i)=>{
+ /* 🏆 POINT SYSTEM (ONLY FOR FINISHED) */
+    finishedPlayers.forEach((p,i)=>{
             if(i===0) p.points += 15;
             else if(i===1) p.points += 12;
             else if(i===2) p.points += 10;
@@ -249,7 +244,15 @@ socket.on("removePlayer", (data)=>{
             else if(i===8) p.points += 2;
             else if(i===9) p.points += 1;
         });
+    // ❌ NOT FINISHED → 0 POINTS
+    notFinished.forEach(p => {
+        p.points += 0;
+    });
 
+    // ✅ Combine both
+    let finalList = [...finishedPlayers, ...notFinished];
+
+    // Send Results
         io.emit("top3", finishOrder.slice(0,3));
         io.emit("leaderboard", finishOrder);
     }
