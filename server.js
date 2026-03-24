@@ -152,12 +152,9 @@ socket.on("startRace", () => {
 
             raceStarted = true;
 
-            io.emit("timer", timeLeft);
+          /*  io.emit("timer", timeLeft);*/
 
             timer = setInterval(()=>{
-
-                timeLeft--;
-               /* io.emit("timer", timeLeft);*/
 
                 if(timeLeft <= 0){
                     clearInterval(timer);
