@@ -234,18 +234,34 @@ ${role==="admin" ? `
 
     track.innerHTML = html;
 
-/* 📱 CAMERA FOLLOW */
-let me = players.find(p=>p.name === playerName);
+/* 📱 CAMERA FOLLOW (FULL FIX: X + Y) */
+
+let me = players.find(p => p.name === playerName);
 
 if(me){
-let cam = document.getElementById("camera");
 
-if(cam){
-cam.scrollTo({
-left: me.position - 120,
-behavior: "smooth"
-});
-}
+    let cam = document.getElementById("camera");
+    if(!cam) return;
+
+    // 👉 Find my lane index
+    let laneIndex = players.findIndex(p => p.name === playerName);
+
+    // 👉 IMPORTANT: Match this with your CSS lane height
+    let laneHeight = 110; // adjust if needed
+
+    // 👉 Center camera on player
+    let left = me.position - (cam.clientWidth / 2);
+    let top = (laneIndex * laneHeight) - (cam.clientHeight / 2);
+
+    // 👉 Prevent negative scroll
+    left = Math.max(0, left);
+    top = Math.max(0, top);
+
+    cam.scrollTo({
+        left: left,
+        top: top,
+        behavior: "smooth"
+    });
 }
 }
 
