@@ -3,49 +3,52 @@
 
 <head>
 
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-
+<!--<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"> -->
 <link rel="stylesheet" href="style.css">
-
 <script src="/socket.io/socket.io.js"></script>
 
 </head>
 
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-
 <body>
 
+<!-- 🎉 BANNER -->
 <div class="banner">
     <h1>വടക്കേക്കര ആനയോട്ടം 🐘</h1>
     <p>🎉 Pooram Elephant Race Festival 🎉</p>
 </div>
 
-<div id="winner"></div>
+<!-- 🎮 CONTROLS (FIXED) -->
+<div class="controls">
 
-<!-- RUN BUTTON -->
-<button id="runBtn" onclick="run()">RUN</button>
+    <!-- RUN -->
+    <button id="runBtn" onclick="run()">RUN</button>
 
-<!-- ADMIN CONTROLS -->
-<div id="adminControls" style="display:none;">
-    <button onclick="startRace()">START</button>
-    <button onclick="resetRace()">RESET</button>
+    <!-- ADMIN -->
+    <div id="adminControls" style="display:none;">
+        <button onclick="startRace()">START</button>
+        <button onclick="resetRace()">RESET</button>
+    </div>
+
 </div>
 
+<!-- ⏱ TIMER -->
 <div id="timer"></div>
+
+<!-- 🏆 RESULTS -->
 <div id="leaderboard"></div>
 
-<!-- BETTING (ONLY FOR SPECTATORS) -->
+<!-- 🎯 BETTING (ONLY SPECTATOR) -->
 <div id="betSection" style="display:none;">
     <select id="betChoice"></select>
     <button onclick="placeBet()">Bet</button>
 </div>
 
-<!-- CAMERA VIEW -->
+<!-- 🐘 TRACK AREA (ONLY THIS SCROLLS) -->
 <div id="camera">
     <div id="track"></div>
 </div>
 
-<!-- FIREWORKS -->
+<!-- 🎆 FIREWORKS -->
 <canvas id="fireworks"></canvas>
 
 <script src="game.js"></script>

@@ -236,6 +236,8 @@ ${role==="admin" ? `
 
 /* 📱 CAMERA FOLLOW (FULL FIX: X + Y) */
 
+/* 📱 CAMERA FOLLOW (FULL FIX: X + Y) */
+
 let me = players.find(p => p.name === playerName);
 
 if(me){
@@ -264,7 +266,6 @@ if(me){
     });
 }
 }
-
 /* ================= REMOVE PLAYER ================= */
 
 function removePlayer(id){
