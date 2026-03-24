@@ -76,40 +76,47 @@ io.on("connection", (socket) => {
 
     /* ================= MOVE ================= */
 
-    socket.on("move", () => {
+socket.on("move", () => {
 
-        if(!raceStarted) return;
+    if(!raceStarted) return;
 
-        let player = players.find(p => p.id === socket.id);
-        if(!player) return;
+    let player = players.find(p => p.id === socket.id);
+    if(!player) return;
 
-        player.position += 25;
+    // ❌ STOP if already finished
+    if(player.position >= FINISH) return;
 
-        /* 🥥 BOOST LOGIC */
-        let boost = boosts.find(b => b.playerId === player.id && !b.used);
+    player.position += 25;
 
-        if(boost && player.position >= boost.position){
-            player.position += 100;
-            boost.used = true;
+    /* 🥥 BOOST LOGIC (optional)
+    let boost = boosts.find(b => b.playerId === player.id && !b.used);
 
-            io.emit("boostTaken", player.id);
+    if(boost && player.position >= boost.position){
+        player.position += 100;
+        boost.used = true;
+
+        io.emit("boostTaken", player.id);
+    }
+    */
+
+    // ✅ CHECK FINISH
+    if(player.position >= FINISH){
+
+        player.position = FINISH;
+
+        // ✅ ADD ONLY ONCE
+        if(!finishOrder.find(p => p.id === player.id)){
+            finishOrder.push(player);
         }
 
-        if(player.position >= FINISH){
-            player.position = FINISH;
-
-            if(!finishOrder.find(p => p.id === player.id)){
-                finishOrder.push(player);
-            }
-
-            if(finishOrder.length === players.length){
-                endRace();
-            }
+        // ✅ END RACE ONLY WHEN ALL FINISH
+        if(finishOrder.length === players.length){
+            endRace();
         }
+    }
 
-        io.emit("positions", players);
-    });
-
+    io.emit("positions", players);
+});
     /* ================= START RACE ================= */
 
     socket.on("startRace", (data) => {
@@ -217,7 +224,20 @@ socket.on("removePlayer", (data)=>{
             timer = null;
         }
 
-        let sorted = [...players].sort((a,b)=>b.position - a.position);
+ // ❗ CHECK: Did all players finish?
+    let allFinished = finishOrder.length === players.length;
+
+    if(!allFinished){
+
+        // ❌ TIMER ENDED EARLY → NO POINTS
+        players.forEach(p => p.points += 0);
+
+        io.emit("top3", []);
+        io.emit("leaderboard", players);
+
+        return;
+    }
+
 
         /* 🏆 POINT SYSTEM */
         sorted.forEach((p,i)=>{
@@ -233,8 +253,8 @@ socket.on("removePlayer", (data)=>{
             else if(i===9) p.points += 1;
         });
 
-        io.emit("top3", sorted.slice(0,3));
-        io.emit("leaderboard", sorted);
+        io.emit("top3", finishOrder.slice(0,3));
+        io.emit("leaderboard", finishOrder);
     }
 
     /* ================= DISCONNECT ================= */
