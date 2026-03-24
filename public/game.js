@@ -237,9 +237,7 @@ ${role==="admin" ? `
 
     track.innerHTML = html;
 
-/* 📱 CAMERA FOLLOW (FULL FIX: X + Y) */
-
-/* 📱 CAMERA FOLLOW (FULL FIX: X + Y) */
+/* 🎯 SMART CAMERA FOLLOW (SMOOTH + STABLE) */
 
 let me = players.find(p => p.name === playerName);
 
@@ -248,25 +246,20 @@ if(me){
     let cam = document.getElementById("camera");
     if(!cam) return;
 
-    // 👉 Find my lane index
     let laneIndex = players.findIndex(p => p.name === playerName);
+    let laneHeight = 80; // MUST match your CSS .lane height
 
-    // 👉 IMPORTANT: Match this with your CSS lane height
-    let laneHeight = 110; // adjust if needed
+    // 🎯 Target positions
+    let targetLeft = me.position - (cam.clientWidth / 2);
+    let targetTop = (laneIndex * laneHeight) - (cam.clientHeight / 2);
 
-    // 👉 Center camera on player
-    let left = me.position - (cam.clientWidth / 2);
-    let top = (laneIndex * laneHeight) - (cam.clientHeight / 2);
+    // Prevent negative scroll
+    targetLeft = Math.max(0, targetLeft);
+    targetTop = Math.max(0, targetTop);
 
-    // 👉 Prevent negative scroll
-    left = Math.max(0, left);
-    top = Math.max(0, top);
-
-    cam.scrollTo({
-        left: left,
-        top: top,
-        behavior: "smooth"
-    });
+    // 🔥 Smooth but NOT jumpy (important fix)
+    cam.scrollLeft += (targetLeft - cam.scrollLeft) * 0.2;
+    cam.scrollTop += (targetTop - cam.scrollTop) * 0.2;
 }
 }
 /* ================= REMOVE PLAYER ================= */
