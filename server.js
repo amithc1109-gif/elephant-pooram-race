@@ -13,7 +13,7 @@ app.use(express.static("public"));
 let players = [];   // ✅ FIX: declared BEFORE API
 let raceStarted = false;
 let finishOrder = [];
-
+let admin = null;
 let timer = null;
 let timeLeft = 60;
 
@@ -41,6 +41,7 @@ io.on("connection", (socket) => {
 
         /* ADMIN */
         if(role === "admin"){
+            admin = socket.id;
             socket.emit("admin");
             socket.emit("players", players);
             return;
@@ -171,7 +172,7 @@ socket.on("startRace", () => {
 
     socket.on("resetRace", (data) => {
 
-        if(socket.id !== "admin") return;
+        if(socket.id !== admin) return;
 
         /*console.log("Race reset by admin");*/
 
@@ -207,9 +208,9 @@ socket.on("removePlayer", (data)=>{
     io.emit("players", players);
 });
 
- function removePlayer(id){
+ /*function removePlayer(id){
     socket.emit("removePlayer", id, { role: "admin" });
-}
+}*/
     
     /* ================= END RACE ================= */
 
