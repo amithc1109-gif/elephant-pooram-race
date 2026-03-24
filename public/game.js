@@ -133,16 +133,6 @@ socket.on("countdown",()=>{
     },1000);
 });
 
-/* ================= RESULTS ================= */
-
-socket.on("top3",(list)=>{
-    document.getElementById("winner").innerHTML = `
-        🥇 ${list[0]?.name || ""}
-        <br>🥈 ${list[1]?.name || ""}
-        <br>🥉 ${list[2]?.name || ""}
-    `;
-});
-
 /* ================= LEADERBOARD ================= */
 
 socket.on("leaderboard",(list)=>{
@@ -150,26 +140,23 @@ socket.on("leaderboard",(list)=>{
 /* SORT SAFETY (IMPORTANT) */
 list.sort((a,b)=>b.points - a.points);
 
-/* PODIUM (TOP 3) */
-let html = `
-<h3>🏆 Leaderboard</h3>
+let html = "<h2>🏆 Results & Leaderboard</h2>";
 
-<div style="font-size:20px; margin-bottom:10px;">
-🥇 ${list[0]?.name || ""} - ${list[0]?.points || 0} pts<br>
-🥈 ${list[1]?.name || ""} - ${list[1]?.points || 0} pts<br>
-🥉 ${list[2]?.name || ""} - ${list[2]?.points || 0} pts
-</div>
+    list.forEach((p,i)=>{
 
-<hr>
-`;
+        let medal = "";
 
-/* TOP 10 LIST */
-html += "<div style='font-size:18px;'>";
+        if(i === 0) medal = "🥇";
+        else if(i === 1) medal = "🥈";
+        else if(i === 2) medal = "🥉";
+        else medal = (i+1) + ".";
 
-list.slice(0,10).forEach((p,i)=>{
-    html += `${i+1}. ${p.name} - ${p.points} pts<br>`;
-});
-
+        html += `
+        <div style="margin:5px 0;">
+            ${medal} ${p.name} - ${p.paapaan || ""} → ${p.points} pts
+        </div>
+        `;
+    });
 html += "</div>";
 
 let lb = document.getElementById("leaderboard");
