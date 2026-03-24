@@ -79,8 +79,10 @@ io.on("connection", (socket) => {
 
 socket.on("move", () => {
 
-    if(!raceStarted) return;
-
+if(!raceStarted) {
+    console.log("Blocked move - race not started");
+    return;
+}
     let player = players.find(p => p.id === socket.id);
     if(!player) return;
 
@@ -142,7 +144,7 @@ socket.on("startRace", () => {
             used: false
         }));*/
 
-        io.emit("boosts", boosts);
+        io.emit("timer", timeLeft);
         io.emit("positions", players);
         io.emit("countdown");
 
@@ -155,14 +157,17 @@ socket.on("startRace", () => {
             timer = setInterval(()=>{
 
                 timeLeft--;
-                io.emit("timer", timeLeft);
+               /* io.emit("timer", timeLeft);*/
 
                 if(timeLeft <= 0){
                     clearInterval(timer);
                     timer = null;
                     endRace();
-                }
+                return;
+            }
 
+            timeLeft--;
+            io.emit("timer", timeLeft);
             },1000);
 
         },3000);
@@ -170,7 +175,7 @@ socket.on("startRace", () => {
 
     /* ================= RESET RACE ================= */
 
-    socket.on("resetRace", (data) => {
+    socket.on("resetRace", () => {
 
         if(socket.id !== admin) return;
 
@@ -184,7 +189,7 @@ socket.on("startRace", () => {
         raceStarted = false;
         finishOrder = [];
         timeLeft = 60;
-        boosts = [];
+        /*boosts = [];*/
 
         players.forEach(p=>{
             p.position = 0;
@@ -194,7 +199,7 @@ socket.on("startRace", () => {
         io.emit("positions", players);
         io.emit("timer", timeLeft);
         io.emit("leaderboard", []);
-        io.emit("boosts", boosts);
+        /*io.emit("boosts", boosts);*/
     });
 
     /* ================= REMOVE PLAYER ================= */
