@@ -19,6 +19,19 @@ event.preventDefault();
 lastTouchEnd = now;
 }, false);
 
+
+window.onload = () => {
+
+    let betSection = document.getElementById("betSection");
+
+    if(role === "spectator"){
+        betSection.style.display = "block";
+    } else {
+        betSection.style.display = "none";
+    }
+
+};
+
 /* ================= JOIN (FIXED) ================= */
 
 if(role === "admin"){
