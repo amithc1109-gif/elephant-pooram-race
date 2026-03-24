@@ -119,11 +119,9 @@ socket.on("move", () => {
 });
     /* ================= START RACE ================= */
 
-    socket.on("startRace", (data) => {
+socket.on("startRace", () => {
 
-        if(data?.role !== "admin") return;
-
-        console.log("Race started by admin");
+    if(socket.id !== admin) return;
 
         if(timer){
             clearInterval(timer);
@@ -136,12 +134,12 @@ socket.on("move", () => {
 
         players.forEach(p => p.position = 0);
 
-        /* 🥥 GENERATE BOOSTS */
+        /* 🥥 GENERATE BOOSTS 
         boosts = players.map(p => ({
             playerId: p.id,
             position: Math.floor(Math.random() * 800) + 200,
             used: false
-        }));
+        }));*/
 
         io.emit("boosts", boosts);
         io.emit("positions", players);
@@ -173,9 +171,9 @@ socket.on("move", () => {
 
     socket.on("resetRace", (data) => {
 
-        if(data?.role !== "admin") return;
+        if(socket.id !== "admin") return;
 
-        console.log("Race reset by admin");
+        /*console.log("Race reset by admin");*/
 
         if(timer){
             clearInterval(timer);
@@ -231,8 +229,6 @@ socket.on("removePlayer", (data)=>{
 
         // ❌ TIMER ENDED EARLY → NO POINTS
         players.forEach(p => p.points += 0);
-
-        io.emit("top3", []);
         io.emit("leaderboard", players);
 
         return;
@@ -240,7 +236,7 @@ socket.on("removePlayer", (data)=>{
 
 
         /* 🏆 POINT SYSTEM */
-        sorted.forEach((p,i)=>{
+        finishOrder.forEach((p,i)=>{
             if(i===0) p.points += 15;
             else if(i===1) p.points += 12;
             else if(i===2) p.points += 10;
