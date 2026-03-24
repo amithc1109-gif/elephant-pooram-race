@@ -117,6 +117,9 @@ socket.on("timer",(t)=>{
 socket.on("countdown",()=>{
 
     canRun = false;
+    
+    let el = document.getElementById("winner");
+    if(!el) return; // 🔥 PREVENT CRASH
 
     let c = 3;
 

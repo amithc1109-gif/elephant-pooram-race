@@ -256,7 +256,7 @@ socket.on("removePlayer", (data)=>{
 
     // Send Results
         io.emit("top3", finishOrder.slice(0,3));
-        io.emit("leaderboard", finishOrder);
+        io.emit("leaderboard", finalList);
     }
 
     /* ================= DISCONNECT ================= */
