@@ -74,26 +74,6 @@ io.on("connection", (socket) => {
         });
 
         io.emit("players", players);
-
-/* ================= BET ================= */
-
-socket.on("placeBet", (data) => {
-
-    if(data.role !== "spectator") return;
-
-    // ❌ prevent duplicate bet
-    let exists = bets.find(b => b.id === socket.id);
-    if(exists) return;
-
-    bets.push({
-        id: socket.id,
-        name: data.name,
-        choice: data.choice
-    });
-
-    io.emit("bets", bets);
-});
-
     });
 
     /* ================= MOVE ================= */
@@ -144,7 +124,7 @@ if(!raceStarted) {
     /* ================= START RACE ================= */
 
 socket.on("startRace", () => {
-bets =[];
+
     if(socket.id !== admin) return;
 
         if(timer){
@@ -278,13 +258,6 @@ socket.on("removePlayer", (data)=>{
     // Send Results
         io.emit("top3", finishOrder.slice(0,3));
         io.emit("leaderboard", finalList);
-
-    /* 🎯 BET RESULTS */
-let winner = finalList[0]?.name;
-
-let winners = bets.filter(b => b.choice === winner);
-
-io.emit("betResults", winners);    
     }
 
     /* ================= DISCONNECT ================= */
@@ -295,13 +268,6 @@ io.emit("betResults", winners);
 
         io.emit("players", players);
     });
-
-    /* 🎯 BET RESULTS */
-let winner = finalList[0]?.name;
-
-let winners = bets.filter(b => b.choice === winner);
-
-io.emit("betResults", winners);
 
 });
 

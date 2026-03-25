@@ -39,8 +39,6 @@
 <!-- 🏆 RESULTS -->
 <div id="leaderboard"></div>
 
-<div id="betsDisplay"></div>
-<div id="betResults"></div>
 
 
 <!-- 🎯 BETTING (ONLY SPECTATOR) -->

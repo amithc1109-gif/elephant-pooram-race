@@ -1,0 +1,153 @@
+body{
+margin:0;
+text-align:center;
+font-family:Arial;
+background:linear-gradient(90deg,#ffcc00,#ff5733);
+}
+
+button{
+    padding:10px 15px;
+    margin:5px;
+    border:none;
+    border-radius:8px;
+    background:#ff5722;
+    color:white;
+    font-weight:bold;
+    cursor:pointer;
+
+    /* 🔥 FIX FOR iOS ZOOM */
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+button:disabled{
+    background:gray;
+}
+
+.banner{
+    background: linear-gradient(90deg,#8B0000,#FF4500,#FFD700);
+    color: white;
+    padding: 20px 10px;
+    text-align: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    border-bottom: 4px solid gold;
+}
+
+.banner h1{
+    margin: 0;
+    font-size: 28px;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+.banner p{
+    margin: 5px 0 0;
+    font-size: 14px;
+}
+
+/* 🔥 FIXED CONTROLS */
+.controls{
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+
+    background: linear-gradient(90deg,#ffcc00,#ff5733);
+    padding:10px;
+
+    display:flex;
+    justify-content:center;
+    gap:10px;
+}
+
+#camera{
+    width:100%;
+
+    /* 🔥 IMPORTANT FIX */
+    height: calc(100vh - 160px);  /* dynamic height */
+
+    overflow-x: auto;
+    overflow-y: auto;
+
+    position: relative;
+    border:4px solid #8B0000;
+    background:rgb(225, 171, 22);
+
+    /* smooth mobile scroll */
+    -webkit-overflow-scrolling: touch;
+}
+
+#track{
+position:relative;
+width:1200px;
+}
+
+.lane{
+position:relative;
+height:80px;
+border-bottom:2px dashed gray;
+}
+
+.boost{
+    position:absolute;
+    top:45px;
+    font-size:28px;
+}
+
+.lane-info{
+position:absolute;
+left:50%;
+transform:translateX(-50%);
+top:5px;
+font-size:14px;
+}
+
+.remove-container{
+    position:absolute;
+    right:10px;
+    top:50%;
+    transform:translateY(-50%);
+}
+
+
+.remove-btn{
+    background:red;
+    color:white;
+    border:none;
+    padding:8px 10px;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+.start{
+position:absolute;
+left:0;
+width:5px;
+background:green;
+top:0;
+bottom:0;
+}
+
+.finish{
+position:absolute;
+right:0;
+width:5px;
+background:red;
+top:0;
+bottom:0;
+}
+
+/* 🐘 FIX */
+
+.elephant{
+position:absolute;
+top:30px;
+font-size:40px;
+    transform: scaleX(-1); /* 🔥 flip direction */
+}
+
+#fireworks{
+position:fixed;
+top:0;
+left:0;
+pointer-events:none;
+}

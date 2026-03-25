@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<h2>Enter Paapaan Name</h2>
+<input id="paapaanInput" placeholder="Paapaan Name">
+
+<h3>Select Team</h3>
+
+<button onclick="showNames('vadakkekara')">വടക്കേക്കര</button>
+<button onclick="showNames('kizhakkekara')">കിഴക്കേക്കര</button>
+
+<h3>Select Elephant</h3>
+<div id="names"></div>
+
+<script>
+
+const teams = {
+
+vadakkekara:[
+"മണ്ണന്തല അച്ചു",
+"പൊന്നുമഠത്തിൽ ലച്ചുകുട്ടി",
+"കരിമ്പിൻകാട്ടിൽ കരിക്കാടൻ",
+"പാലത്തറയിൽ അന്നക്കുട്ടി",
+"അറക്കൽ അലികൊമ്പൻ"
+],
+
+kizhakkekara:[
+"ഡാറ്റാപറമ്പിൽ ശ്രീരു",
+"കുന്നിൻച്ചരുവിൽ ജനീലിയ",
+"വള്ളികൊമ്പിൻ ജൂഡൻ",
+"കാക്കനാട് സോണി",
+"മല്ലപ്പള്ളി ആലുവാക്കൊമ്പൻ"
+]
+
+};
+
+async function showNames(team){
+
+let paapaan = document.getElementById("paapaanInput").value;
+
+if(!paapaan){
+    alert("Enter Paapaan name");
+    return;
+}
+
+localStorage.setItem("paapaan", paapaan);
+
+let container = document.getElementById("names");
+container.innerHTML = "";
+
+/* GET CURRENT PLAYERS */
+let players = await fetch("/players").then(r=>r.json()).catch(()=>[]);
+
+teams[team].forEach(name => {
+
+    let btn = document.createElement("button");
+    btn.innerText = name;
+
+    /* CHECK IF TAKEN */
+    let taken = players.find(p => p.name === name);
+
+    if(taken){
+        btn.disabled = true;
+        btn.innerText += " ❌ Taken";
+    }
+
+    btn.onclick = () => {
+
+        if(taken){
+            alert("Already taken!");
+            return;
+        }
+
+        localStorage.setItem("playerName", name);
+        localStorage.setItem("role", "player");
+
+        window.location = "game.html";
+    };
+
+    container.appendChild(btn);
+
+});
+
+}
+
+</script>
+
+</body>
+</html>

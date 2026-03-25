@@ -188,27 +188,8 @@ function placeBet(){
 
     myBet = val.value;
 
- socket.emit("placeBet", {
-        name: "Spectator",
-        choice: myBet,
-        role: role
-    });
-
     alert("Bet locked: " + myBet);
 }
-
-/*=================SHOW LIVE BETS==================*/
-socket.on("bets",(data)=>{
-
-    let html = "<h3>🎯 Live Bets</h3>";
-
-    data.forEach(b=>{
-        html += `<div>${b.name} → ${b.choice}</div>`;
-    });
-
-    document.getElementById("betsDisplay").innerHTML = html;
-});
-
 
 /* ================= DRAW (CRITICAL FIX) ================= */
 
@@ -281,24 +262,6 @@ if(me){
     cam.scrollTop += (targetTop - cam.scrollTop) * 0.2;
 }
 }
-
-
-/*===================SHOW BET RESULTS===============*/
-socket.on("betResults",(winners)=>{
-
-    let html = "<h3>🏆 Bet Winners</h3>";
-
-    if(winners.length === 0){
-        html += "<div>No one guessed correctly ❌</div>";
-    } else {
-        winners.forEach(w=>{
-            html += `<div>🎉 ${w.name}</div>`;
-        });
-    }
-
-    document.getElementById("betResults").innerHTML = html;
-});
-
 /* ================= REMOVE PLAYER ================= */
 
 function removePlayer(id){
