@@ -10,19 +10,17 @@ app.use(express.static("public"));
 
 /* ================= GLOBAL STATE ================= */
 
-let players = [];   // ✅ FIX: declared BEFORE API
+let players = [];
 let raceStarted = false;
 let finishOrder = [];
 let admin = null;
 let timer = null;
 let timeLeft = 60;
-let bets=[];
-
-let boosts = [];
+let bets = [];
 
 const FINISH = 1200;
 
-/* ================= API (FOR TEAM PAGE) ================= */
+/* ================= API ================= */
 
 app.get("/players", (req, res) => {
     res.json(players);
@@ -55,10 +53,8 @@ io.on("connection", (socket) => {
         }
 
         /* PLAYER */
-
         if(!name) return;
 
-        // prevent duplicate elephant
         let exists = players.find(p => p.name === name);
         if(exists){
             socket.emit("nameTaken");
@@ -74,78 +70,66 @@ io.on("connection", (socket) => {
         });
 
         io.emit("players", players);
-
-/* ================= BET ================= */
-
-socket.on("placeBet", (data) => {
-
-    if(data.role !== "spectator") return;
-
-    // ❌ prevent duplicate bet
-    let exists = bets.find(b => b.id === socket.id);
-    if(exists) return;
-
-    bets.push({
-        id: socket.id,
-        name: data.name,
-        choice: data.choice
     });
 
-    io.emit("bets", bets);
-});
+    /* ================= BET ================= */
 
+    socket.on("placeBet", (data) => {
+
+        if(data.role !== "spectator") return;
+
+        // 🔒 prevent betting after race starts
+        if(raceStarted) return;
+
+        // ❌ prevent duplicate bet
+        let exists = bets.find(b => b.id === socket.id);
+        if(exists) return;
+
+        bets.push({
+            id: socket.id,
+            name: data.name || "Spectator",
+            choice: data.choice
+        });
+
+        io.emit("bets", bets);
     });
 
     /* ================= MOVE ================= */
 
-socket.on("move", () => {
+    socket.on("move", () => {
 
-if(!raceStarted) {
-    console.log("Blocked move - race not started");
-    return;
-}
-    let player = players.find(p => p.id === socket.id);
-    if(!player) return;
+        if(!raceStarted) return;
 
-    // ❌ STOP if already finished
-    if(player.position >= FINISH) return;
+        let player = players.find(p => p.id === socket.id);
+        if(!player) return;
 
-    player.position += 25;
+        if(player.position >= FINISH) return;
 
-    /* 🥥 BOOST LOGIC (optional)
-    let boost = boosts.find(b => b.playerId === player.id && !b.used);
+        player.position += 25;
 
-    if(boost && player.position >= boost.position){
-        player.position += 100;
-        boost.used = true;
+        if(player.position >= FINISH){
 
-        io.emit("boostTaken", player.id);
-    }
-    */
+            player.position = FINISH;
 
-    // ✅ CHECK FINISH
-    if(player.position >= FINISH){
+            if(!finishOrder.find(p => p.id === player.id)){
+                finishOrder.push(player);
+            }
 
-        player.position = FINISH;
-
-        // ✅ ADD ONLY ONCE
-        if(!finishOrder.find(p => p.id === player.id)){
-            finishOrder.push(player);
+            if(finishOrder.length === players.length){
+                endRace();
+            }
         }
 
-        // ✅ END RACE ONLY WHEN ALL FINISH
-        if(finishOrder.length === players.length){
-            endRace();
-        }
-    }
+        io.emit("positions", players);
+    });
 
-    io.emit("positions", players);
-});
     /* ================= START RACE ================= */
 
-socket.on("startRace", () => {
-bets =[];
-    if(socket.id !== admin) return;
+    socket.on("startRace", () => {
+
+        if(socket.id !== admin) return;
+
+        bets = []; // reset bets
 
         if(timer){
             clearInterval(timer);
@@ -158,22 +142,13 @@ bets =[];
 
         players.forEach(p => p.position = 0);
 
-        /* 🥥 GENERATE BOOSTS 
-        boosts = players.map(p => ({
-            playerId: p.id,
-            position: Math.floor(Math.random() * 800) + 200,
-            used: false
-        }));*/
-
-        io.emit("timer", timeLeft);
         io.emit("positions", players);
+        io.emit("timer", timeLeft);
         io.emit("countdown");
 
         setTimeout(()=>{
 
             raceStarted = true;
-
-          /*  io.emit("timer", timeLeft);*/
 
             timer = setInterval(()=>{
 
@@ -181,11 +156,12 @@ bets =[];
                     clearInterval(timer);
                     timer = null;
                     endRace();
-                return;
-            }
+                    return;
+                }
 
-            timeLeft--;
-            io.emit("timer", timeLeft);
+                timeLeft--;
+                io.emit("timer", timeLeft);
+
             },1000);
 
         },3000);
@@ -197,8 +173,6 @@ bets =[];
 
         if(socket.id !== admin) return;
 
-        /*console.log("Race reset by admin");*/
-
         if(timer){
             clearInterval(timer);
             timer = null;
@@ -207,34 +181,27 @@ bets =[];
         raceStarted = false;
         finishOrder = [];
         timeLeft = 60;
-        /*boosts = [];*/
 
         players.forEach(p=>{
             p.position = 0;
-            p.points = 0;
         });
 
         io.emit("positions", players);
         io.emit("timer", timeLeft);
         io.emit("leaderboard", []);
-        /*io.emit("boosts", boosts);*/
     });
 
     /* ================= REMOVE PLAYER ================= */
 
-socket.on("removePlayer", (data)=>{
+    socket.on("removePlayer", (data)=>{
 
-    if(!data || data.role !== "admin") return;
+        if(!data || data.role !== "admin") return;
 
-    players = players.filter(p => p.id !== data.id);
+        players = players.filter(p => p.id !== data.id);
 
-    io.emit("players", players);
-});
+        io.emit("players", players);
+    });
 
- /*function removePlayer(id){
-    socket.emit("removePlayer", id, { role: "admin" });
-}*/
-    
     /* ================= END RACE ================= */
 
     function endRace(){
@@ -246,16 +213,14 @@ socket.on("removePlayer", (data)=>{
             timer = null;
         }
 
-    // ✅ Finished players (in order)
-    let finishedPlayers = [...finishOrder];
+        let finishedPlayers = [...finishOrder];
 
-    // ❌ Not finished players
-    let notFinished = players.filter(p => 
-        !finishOrder.find(f => f.id === p.id)
-    );
+        let notFinished = players.filter(p => 
+            !finishOrder.find(f => f.id === p.id)
+        );
 
- /* 🏆 POINT SYSTEM (ONLY FOR FINISHED) */
-    finishedPlayers.forEach((p,i)=>{
+        /* 🏆 POINT SYSTEM */
+        finishedPlayers.forEach((p,i)=>{
             if(i===0) p.points += 15;
             else if(i===1) p.points += 12;
             else if(i===2) p.points += 10;
@@ -267,24 +232,20 @@ socket.on("removePlayer", (data)=>{
             else if(i===8) p.points += 2;
             else if(i===9) p.points += 1;
         });
-    // ❌ NOT FINISHED → 0 POINTS
-    notFinished.forEach(p => {
-        p.points += 0;
-    });
 
-    // ✅ Combine both
-    let finalList = [...finishedPlayers, ...notFinished];
+        // not finished → 0 pts
+        notFinished.forEach(p => p.points += 0);
 
-    // Send Results
-        io.emit("top3", finishOrder.slice(0,3));
+        let finalList = [...finishedPlayers, ...notFinished];
+
+        io.emit("top3", finishedPlayers.slice(0,3));
         io.emit("leaderboard", finalList);
 
-    /* 🎯 BET RESULTS */
-let winner = finalList[0]?.name;
+        /* 🎯 BET RESULTS */
+        let winner = finalList[0]?.name;
+        let winners = bets.filter(b => b.choice === winner);
 
-let winners = bets.filter(b => b.choice === winner);
-
-io.emit("betResults", winners);    
+        io.emit("betResults", winners);
     }
 
     /* ================= DISCONNECT ================= */
@@ -293,15 +254,16 @@ io.emit("betResults", winners);
 
         players = players.filter(p => p.id !== socket.id);
 
+        // remove bet if spectator leaves
+        bets = bets.filter(b => b.id !== socket.id);
+
+        if(socket.id === admin){
+            admin = null;
+        }
+
         io.emit("players", players);
+        io.emit("bets", bets);
     });
-
-    /* 🎯 BET RESULTS */
-let winner = finalList[0]?.name;
-
-let winners = bets.filter(b => b.choice === winner);
-
-io.emit("betResults", winners);
 
 });
 
