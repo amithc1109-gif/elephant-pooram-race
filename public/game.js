@@ -218,16 +218,18 @@ function placeBet(){
     let val = document.getElementById("betChoice");
     if(!val) return;
 
-    myBet = val.value;
+    // 🔥 CLEAN VALUE HERE
+    myBet = val.value.trim();
 
     socket.emit("placeBet", {
         choice: myBet,
-        name: localStorage.getItem("spectatorName") // ✅ ADD THIS
+        name: localStorage.getItem("spectatorName")
     });
+
+    console.log("🎯 My Bet:", myBet);
 
     alert("Bet locked: " + myBet);
 }
-
 /* ================= LIVE BET TABLE ================= */
 
 socket.on("bets", (bets) => {

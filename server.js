@@ -83,13 +83,13 @@ io.on("connection", (socket) => {
     if(!data || !data.choice) return;
     if(raceStarted) return;
 
-    const choice = data.choice.trim();
+    const choice = data.choice.trim(); // ✅ elephant name
     const name = (data.name || "Spectator").trim();
 
     let existing = bets.find(b => b.id === socket.id);
 
     if(existing){
-        existing.choice = choice; // ✅ ALWAYS TRIMMED
+        existing.choice = choice;
         existing.name = name;
     } else {
         bets.push({
@@ -99,7 +99,7 @@ io.on("connection", (socket) => {
         });
     }
 
-    console.log("✅ Bets:", bets);
+    console.log("✅ Bets Stored:", bets);
 
     io.emit("bets", bets);
 });
@@ -216,7 +216,7 @@ io.on("connection", (socket) => {
 
     /* ================= END RACE ================= */
 
-    function endRace(){
+ function endRace(){
 
     raceStarted = false;
 
@@ -228,7 +228,6 @@ io.on("connection", (socket) => {
     let sorted = [...players].sort((a,b)=>b.position - a.position);
 
     sorted.forEach((p,i)=>{
-
         if(p.position < FINISH) return;
 
         if(i===0) p.points += 15;
@@ -238,19 +237,21 @@ io.on("connection", (socket) => {
 
     io.emit("leaderboard", sorted);
 
-    /* 🔥 SAFE WINNER MATCH */
- let winner = sorted[0]?.name?.trim().toLowerCase();
+    /* 🔥 MATCH USING ELEPHANT NAME */
 
-let winners = bets.filter(b => 
-    b.choice?.trim().toLowerCase() === winner
-);
+    let winnerElephant = sorted[0]?.name?.trim();
 
-    console.log("🏆 Winner:", winner);
-    console.log("🎯 Winners:", winners);
+    console.log("🏆 Winning Elephant:", winnerElephant);
+
+    let winners = bets.filter(b => {
+        return b.choice?.trim() === winnerElephant;
+    });
+
+    console.log("🎯 Bet Winners:", winners);
 
     io.emit("betResults", winners);
 
-    bets = []; // reset
+    bets = [];
 }
     /* ================= DISCONNECT ================= */
 
