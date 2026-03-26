@@ -111,6 +111,10 @@ function run(){
 
 function startRace(){
     socket.emit("startRace", { role: "admin" });
+    let betSection = document.getElementById("betSection");
+if(betSection){
+    betSection.style.display = "none"; // 🔒 lock betting when race starts
+}
 }
 
 function resetRace(){
@@ -152,6 +156,11 @@ socket.on("countdown",()=>{
 /* ================= LEADERBOARD ================= */
 
 socket.on("leaderboard",(list)=>{
+
+let liveTable = document.getElementById("liveBetsTable");
+if(liveTable){
+    liveTable.style.display = "none"; // ✅ hide
+}
 
 let betSection = document.getElementById("betSection");
 if(betSection){
@@ -211,9 +220,9 @@ function placeBet(){
 
     myBet = val.value;
 
- socket.emit("placeBet", {
-        choice: myBet
-
+    socket.emit("placeBet", {
+        choice: myBet,
+        name: localStorage.getItem("spectatorName") // ✅ ADD THIS
     });
 
     alert("Bet locked: " + myBet);
@@ -353,11 +362,42 @@ socket.on("betResults", (winners) => {
         });
     }
 
-    let container = document.getElementById("betWinners");
+    let container = document.getElementById("betResults");
     if(container){
         container.innerHTML = html;
     }
 });
+
+/*======================= RACE RESET===============*/
+socket.on("raceReset", () => {
+
+    console.log("🔄 Race Reset");
+
+    // ✅ allow betting again
+    let betSection = document.getElementById("betSection");
+    if(betSection){
+        betSection.style.display = "block";
+    }
+
+    let liveTable = document.getElementById("liveBetsTable");
+    if(liveTable){
+        liveTable.style.display = "block";
+        liveTable.innerHTML = ""; // clear old
+    }
+
+    // ✅ clear leaderboard
+    let lb = document.getElementById("leaderboard");
+    if(lb) lb.innerHTML = "";
+
+    // ✅ clear bet results
+    let br = document.getElementById("betResults");
+    if(br) br.innerHTML = "";
+
+    // ✅ reset local bet
+    myBet = null;
+});
+
+
 /* ================= REMOVE PLAYER ================= */
 
 function removePlayer(id){

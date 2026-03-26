@@ -90,6 +90,7 @@ io.on("connection", (socket) => {
 
         // ❌ prevent duplicate bet
         let existing = bets.find(b => b.id === socket.id);
+        if(existing) return; // 🔒 lock once
         if(existing) {
             existing.choice =data.choice; //Update bet
         } else {
@@ -175,6 +176,7 @@ io.on("connection", (socket) => {
             },1000);
 
         },3000);
+        io.emit("bets", bets); 
     });
 
     /* ================= RESET RACE ================= */
@@ -199,6 +201,7 @@ io.on("connection", (socket) => {
         io.emit("positions", players);
         io.emit("timer", timeLeft);
         io.emit("leaderboard", []);
+        io.emit("raceReset"); // ✅ NEW EVENT
     });
 
     /* ================= REMOVE PLAYER ================= */
