@@ -47,10 +47,14 @@ io.on("connection", (socket) => {
         }
 
         /* SPECTATOR */
-        if(role === "spectator"){
-            socket.emit("players", players);
-            return;
-        }
+  if(role === "spectator"){
+
+        socket.spectatorName = name || "Spectator";
+
+        socket.emit("players", players);
+        socket.emit("bets", bets);
+        return;
+    }   
 
         /* PLAYER */
         if(!name) return;

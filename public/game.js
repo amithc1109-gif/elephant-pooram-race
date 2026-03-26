@@ -38,7 +38,12 @@ if(role === "admin"){
     socket.emit("join", { role: "admin" });
 }
 else if(role === "spectator"){
-    socket.emit("join", { role: "spectator" });
+        let spectatorName = localStorage.getItem("spectatorName");
+
+    socket.emit("join", {
+        role: "spectator",
+        name: spectatorName
+    });
 }
 else{
     socket.emit("join", {
@@ -169,10 +174,15 @@ if(lb) lb.innerHTML = html;
 if(role==="spectator" && myBet){
 
 if(myBet === list[0]?.name){
-alert("🎉 You WON your bet!");
+msg="🎉 You WON your bet!";
 }else{
-alert("❌ You lost your bet");
+msg="❌ You lost your bet";
 }
+
+ let resultDiv = document.getElementById("betResult");
+        if(resultDiv){
+            resultDiv.innerHTML = `<h3>${msg}</h3>`;
+        }
 
 }
 
@@ -189,24 +199,55 @@ function placeBet(){
     myBet = val.value;
 
  socket.emit("placeBet", {
-        name: "Spectator",
-        choice: myBet,
-        role: role
+        choice: myBet
+
     });
 
     alert("Bet locked: " + myBet);
 }
 
-/*=================SHOW LIVE BETS==================*/
-socket.on("bets",(data)=>{
+/* ================= LIVE BET TABLE ================= */
 
-    let html = "<h3>🎯 Live Bets</h3>";
+socket.on("bets", (bets) => {
 
-    data.forEach(b=>{
-        html += `<div>${b.name} → ${b.choice}</div>`;
+    let container = document.getElementById("betSection");
+    if(!container) return;
+
+    let grouped = {};
+
+    bets.forEach(b => {
+        if(!grouped[b.choice]){
+            grouped[b.choice] = [];
+        }
+        grouped[b.choice].push(b.name);
     });
 
-    document.getElementById("betsDisplay").innerHTML = html;
+    let html = "<h3>🎯 Live Bets</h3>";
+    html += `
+    <table style="width:100%; border-collapse: collapse;">
+        <tr style="font-weight:bold;">
+            <td>Elephant</td>
+            <td>Paapaan</td>
+            <td>Bets</td>
+        </tr>
+    `;
+
+    players.forEach(p => {
+
+        let count = grouped[p.name]?.length || 0;
+
+        html += `
+        <tr>
+            <td>${p.name}</td>
+            <td>${p.paapaan || "-"}</td>
+            <td>${count}</td>
+        </tr>
+        `;
+    });
+
+    html += "</table>";
+
+    container.innerHTML = html;
 });
 
 
@@ -282,23 +323,25 @@ if(me){
 }
 }
 
+/* ================= BET WINNERS ================= */
 
-/*===================SHOW BET RESULTS===============*/
-socket.on("betResults",(winners)=>{
+socket.on("betResults", (winners) => {
 
     let html = "<h3>🏆 Bet Winners</h3>";
 
     if(winners.length === 0){
-        html += "<div>No one guessed correctly ❌</div>";
+        html += "No one guessed correctly ❌";
     } else {
-        winners.forEach(w=>{
+        winners.forEach(w => {
             html += `<div>🎉 ${w.name}</div>`;
         });
     }
 
-    document.getElementById("betResults").innerHTML = html;
+    let container = document.getElementById("betWinners");
+    if(container){
+        container.innerHTML = html;
+    }
 });
-
 /* ================= REMOVE PLAYER ================= */
 
 function removePlayer(id){
