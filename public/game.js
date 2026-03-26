@@ -121,6 +121,7 @@ socket.on("timer",(t)=>{
 
 socket.on("countdown",()=>{
 
+    
     canRun = false;
     
     let el = document.getElementById("winner");
@@ -145,6 +146,11 @@ socket.on("countdown",()=>{
 
 socket.on("leaderboard",(list)=>{
 
+let betSection = document.getElementById("betSection");
+if(betSection){
+    betSection.style.display = "none"; // 🔥 hide after race
+}
+    
 /* SORT SAFETY (IMPORTANT) */
 list.sort((a,b)=>b.points - a.points);
 
