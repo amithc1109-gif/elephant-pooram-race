@@ -223,6 +223,9 @@ function placeBet(){
 
 socket.on("bets", (bets) => {
 
+    console.log(" RECEIVED BETS:",bets);
+    console.log(" PLAYERS:",players);
+
     let container = document.getElementById("liveBetsTable");
     if(!container) return;
 

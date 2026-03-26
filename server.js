@@ -85,9 +85,11 @@ io.on("connection", (socket) => {
 
         // 🔒 prevent betting after race starts
         if(raceStarted) return;
+        
+       const choice=data.choice.trim();
 
         // ❌ prevent duplicate bet
-        let exists = bets.find(b => b.id === socket.id);
+        let existing = bets.find(b => b.id === socket.id);
         if(existing) {
             existing.choice =data.choice; //Update bet
         } else {
@@ -214,52 +216,38 @@ io.on("connection", (socket) => {
 
     function endRace(){
 
-        raceStarted = false;
+    raceStarted = false;
 
-        if(timer){
-            clearInterval(timer);
-            timer = null;
-        }
-
-        let finishedPlayers = [...finishOrder];
-
-        let notFinished = players.filter(p => 
-            !finishOrder.find(f => f.id === p.id)
-        );
-
-        /* 🏆 POINT SYSTEM */
-        finishedPlayers.forEach((p,i)=>{
-            if(i===0) p.points += 15;
-            else if(i===1) p.points += 12;
-            else if(i===2) p.points += 10;
-            else if(i===3) p.points += 8;
-            else if(i===4) p.points += 7;
-            else if(i===5) p.points += 6;
-            else if(i===6) p.points += 5;
-            else if(i===7) p.points += 4;
-            else if(i===8) p.points += 2;
-            else if(i===9) p.points += 1;
-        });
-
-        // not finished → 0 pts
-        notFinished.forEach(p => p.points += 0);
-
-        let finalList = [...finishedPlayers, ...notFinished];
-
-       // io.emit("top3", finishedPlayers.slice(0,3));//
-        io.emit("leaderboard", finalList);
-
-        /* 🎯 BET RESULTS */
-        let winner = finishOrder[0];
-        let winners = bets.filter(b => b.choice === winner.name);
-
-        console.log(" Winner:", winner.name);
-        console.log(" Bet Winners:", winners)
-
-        io.emit("betResults", winners);
-       /* bets= [];*/
+    if(timer){
+        clearInterval(timer);
+        timer = null;
     }
 
+    let sorted = [...players].sort((a,b)=>b.position - a.position);
+
+    sorted.forEach((p,i)=>{
+
+        if(p.position < FINISH) return;
+
+        if(i===0) p.points += 15;
+        else if(i===1) p.points += 12;
+        else if(i===2) p.points += 10;
+    });
+
+    io.emit("leaderboard", sorted);
+
+    /* 🔥 SAFE WINNER MATCH */
+    let winner = sorted[0]?.name?.trim();
+
+    let winners = bets.filter(b => b.choice?.trim() === winner);
+
+    console.log("🏆 Winner:", winner);
+    console.log("🎯 Winners:", winners);
+
+    io.emit("betResults", winners);
+
+    bets = []; // reset
+}
     /* ================= DISCONNECT ================= */
 
     socket.on("disconnect", ()=>{
