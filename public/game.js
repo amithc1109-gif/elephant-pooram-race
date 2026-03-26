@@ -400,6 +400,12 @@ socket.on("raceReset", () => {
     let br = document.getElementById("betResults");
     if(br) br.innerHTML = "";
 
+        // ✅ reset dropdown (🚀 NICE TOUCH)
+    let dropdown = document.getElementById("betChoice");
+    if(dropdown){
+        dropdown.selectedIndex = 0;
+    }
+
     // ✅ reset local bet
     myBet = null;
 });

@@ -139,8 +139,6 @@ io.on("connection", (socket) => {
 
         if(socket.id !== admin) return;
 
-        bets = []; // reset bets
-
         if(timer){
             clearInterval(timer);
             timer = null;
@@ -197,6 +195,7 @@ io.on("connection", (socket) => {
             p.position = 0;
         });
 
+        bets = [];
         io.emit("positions", players);
         io.emit("timer", timeLeft);
         io.emit("leaderboard", []);
