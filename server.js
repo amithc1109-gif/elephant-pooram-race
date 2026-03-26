@@ -81,19 +81,23 @@ io.on("connection", (socket) => {
     socket.on("placeBet", (data) => {
 
         if(data.role !== "spectator") return;
+        if(!data || !data.choice) return;
 
         // 🔒 prevent betting after race starts
         if(raceStarted) return;
 
         // ❌ prevent duplicate bet
         let exists = bets.find(b => b.id === socket.id);
-        if(exists) return;
-
-        bets.push({
-            id: socket.id,
-            name: data.name || "Spectator",
-            choice: data.choice
+        if(existing) {
+            existing.choice =data.choice; //Update bet
+        } else {
+           bets.push({
+             id: socket.id,
+             name: data.name || "Spectator",
+             choice: data.choice
         });
+        }
+        console.log(" Bets:", bets);
 
         io.emit("bets", bets);
     });
@@ -242,14 +246,18 @@ io.on("connection", (socket) => {
 
         let finalList = [...finishedPlayers, ...notFinished];
 
-        io.emit("top3", finishedPlayers.slice(0,3));
+       // io.emit("top3", finishedPlayers.slice(0,3));//
         io.emit("leaderboard", finalList);
 
         /* 🎯 BET RESULTS */
-        let winner = finalList[0]?.name;
-        let winners = bets.filter(b => b.choice === winner);
+        let winner = finishOrder[0];
+        let winners = bets.filter(b => b.choice === winner.name);
+
+        console.log(" Winner:", winner.name);
+        console.log(" Bet Winners:", winners)
 
         io.emit("betResults", winners);
+       /* bets= [];*/
     }
 
     /* ================= DISCONNECT ================= */
