@@ -80,30 +80,29 @@ io.on("connection", (socket) => {
 
     socket.on("placeBet", (data) => {
 
-        if(data.role !== "spectator") return;
-        if(!data || !data.choice) return;
+    if(!data || !data.choice) return;
+    if(raceStarted) return;
 
-        // 🔒 prevent betting after race starts
-        if(raceStarted) return;
-        
-       const choice=data.choice.trim();
+    const choice = data.choice.trim();
+    const name = (data.name || "Spectator").trim();
 
-        // ❌ prevent duplicate bet
-        let existing = bets.find(b => b.id === socket.id);
-        if(existing) return; // 🔒 lock once
-        if(existing) {
-            existing.choice =data.choice; //Update bet
-        } else {
-           bets.push({
-             id: socket.id,
-             name: data.name || "Spectator",
-             choice: data.choice
+    let existing = bets.find(b => b.id === socket.id);
+
+    if(existing){
+        existing.choice = choice; // ✅ ALWAYS TRIMMED
+        existing.name = name;
+    } else {
+        bets.push({
+            id: socket.id,
+            name: name,
+            choice: choice
         });
-        }
-        console.log(" Bets:", bets);
+    }
 
-        io.emit("bets", bets);
-    });
+    console.log("✅ Bets:", bets);
+
+    io.emit("bets", bets);
+});
 
     /* ================= MOVE ================= */
 
@@ -240,9 +239,11 @@ io.on("connection", (socket) => {
     io.emit("leaderboard", sorted);
 
     /* 🔥 SAFE WINNER MATCH */
-    let winner = sorted[0]?.name?.trim();
+ let winner = sorted[0]?.name?.trim().toLowerCase();
 
-    let winners = bets.filter(b => b.choice?.trim() === winner);
+let winners = bets.filter(b => 
+    b.choice?.trim().toLowerCase() === winner
+);
 
     console.log("🏆 Winner:", winner);
     console.log("🎯 Winners:", winners);

@@ -238,14 +238,19 @@ socket.on("bets", (bets) => {
     let container = document.getElementById("liveBetsTable");
     if(!container) return;
 
-    let grouped = {};
+ let grouped = {};
 
-    bets.forEach(b => {
-        if(!grouped[b.choice]){
-            grouped[b.choice] = [];
-        }
-        grouped[b.choice].push(b.name);
-    });
+bets.forEach(b => {
+    let key = b.choice?.trim();
+
+    if(!key) return;
+
+    if(!grouped[key]){
+        grouped[key] = [];
+    }
+
+    grouped[key].push(b.name);
+});
 
     let html = "<h3>🎯 Live Bets</h3>";
     html += `
