@@ -39,20 +39,20 @@
 <!-- 🏆 RESULTS -->
 <div id="leaderboard"></div>
 
-<div id="betsDisplay"></div>
-<div id="betResults"></div>
-
-
 <!-- 🎯 BETTING (ONLY SPECTATOR) -->
 <div id="betSection" style="display:none;">
-    <select id="betChoice"></select>
-    <button onclick="placeBet()">Bet</button>
-</div>
+    <div id="betControls">
+        <select id="betChoice"></select>
+        <button onclick="placeBet()">Bet</button>
+    </div>
 
     <!-- 📊 LIVE BET TABLE -->
     <div id="liveBetsTable"></div>
 
 </div>
+
+<div id="betsDisplay"></div>
+<div id="betResults"></div>
 
 <!-- 🐘 TRACK AREA (ONLY THIS SCROLLS) -->
 <div id="camera">

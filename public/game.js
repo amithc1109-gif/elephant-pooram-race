@@ -83,6 +83,13 @@ socket.on("players",(data)=>{
             bet.appendChild(o);
         });
     }
+
+// Show Bet Section
+let betSection = document.getElementById("betSection");
+if(betSection){
+    betSection.style.display = "block"
+}
+
 });
 
 /* ================= POSITIONS ================= */
@@ -216,7 +223,7 @@ function placeBet(){
 
 socket.on("bets", (bets) => {
 
-    let container = document.getElementById("betSection");
+    let container = document.getElementById("liveBetsTable");
     if(!container) return;
 
     let grouped = {};
