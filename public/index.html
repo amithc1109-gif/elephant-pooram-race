@@ -4,6 +4,35 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>വടക്കേക്കര ആനയോട്ടം</title>
 <link rel="stylesheet" href="style.css">
+
+<style>
+.container{
+    text-align:center;
+    margin-top:50px;
+}
+
+.input-box{
+    padding:12px;
+    width:220px;
+    border-radius:8px;
+    border:none;
+    margin-top:10px;
+    font-size:16px;
+    text-align:center;
+}
+
+.join-btn{
+    margin-top:10px;
+    padding:12px 20px;
+    border:none;
+    border-radius:8px;
+    background:#ff5722;
+    color:white;
+    font-weight:bold;
+    cursor:pointer;
+}
+</style>
+
 </head>
 
 <body>
@@ -13,42 +42,69 @@
 <h2>Select Mode</h2>
 
 <button onclick="participant()">Participant</button>
-<button onclick="spectator()">Spectator</button>
+<button onclick="showSpectatorUI()">Spectator</button>
+
+<!-- 🔥 SPECTATOR UI -->
+<div id="spectatorUI" class="container" style="display:none;">
+
+    <h3>Enter Your Name</h3>
+
+    <input id="spectatorName" class="input-box" placeholder="Your Name">
+
+    <br>
+
+    <button class="join-btn" onclick="joinSpectator()">Join Game</button>
+
+</div>
 
 <script>
 
+/* ================= PARTICIPANT ================= */
+
 function participant(){
 
-let pass = prompt("Enter Password");
+    let pass = prompt("Enter Password");
 
-if(pass === "admin123"){
+    if(pass === "admin123"){
 
-localStorage.setItem("role","admin");
-localStorage.setItem("playerName","ADMIN"); // 🔥 IMPORTANT
+        localStorage.setItem("role","admin");
+        localStorage.setItem("playerName","ADMIN");
 
-window.location="game.html";
+        window.location="game.html";
+    }
+    else if(pass === "race123"){
 
+        localStorage.setItem("role","player");
+
+        window.location="team.html";
+    }
+    else{
+        alert("Wrong password");
+    }
 }
 
-else if(pass === "race123"){
+/* ================= SHOW UI ================= */
 
-localStorage.setItem("role","player");
+function showSpectatorUI(){
 
-window.location="team.html";
-
+    document.getElementById("spectatorUI").style.display = "block";
 }
 
-else{
-alert("Wrong password");
-}
+/* ================= JOIN ================= */
 
-}
+function joinSpectator(){
 
-function spectator(){
+    let name = document.getElementById("spectatorName").value;
 
-localStorage.setItem("role","spectator");
-window.location="game.html";
+    if(!name){
+        alert("Please enter your name");
+        return;
+    }
 
+    localStorage.setItem("role","spectator");
+    localStorage.setItem("spectatorName", name);
+
+    window.location="game.html";
 }
 
 </script>
