@@ -146,7 +146,7 @@ io.on("connection", (socket) => {
 
         raceStarted = false;
         finishOrder = [];
-        timeLeft = 60;
+        timeLeft = 120;
 
         players.forEach(p => p.position = 0);
 
@@ -189,7 +189,7 @@ io.on("connection", (socket) => {
 
         raceStarted = false;
         finishOrder = [];
-        timeLeft = 60;
+        timeLeft = 120;
 
         players.forEach(p=>{
             p.position = 0;
