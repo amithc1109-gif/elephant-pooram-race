@@ -15,7 +15,7 @@ let raceStarted = false;
 let finishOrder = [];
 let admin = null;
 let timer = null;
-let timeLeft = 60;
+let timeLeft = 120;
 let bets = [];
 
 const FINISH = 1200;
@@ -224,10 +224,21 @@ io.on("connection", (socket) => {
         timer = null;
     }
 
-    let sorted = [...players].sort((a,b)=>b.position - a.position);
+let sorted = [];
+
+// 🥇 First: those who finished (correct order)
+finishOrder.forEach(p => sorted.push(p));
+
+// 🥈 Then: remaining players sorted by position
+let remaining = players
+    .filter(p => !finishOrder.find(f => f.id === p.id))
+    .sort((a,b) => b.position - a.position);
+
+sorted = [...sorted, ...remaining];
 
     sorted.forEach((p,i)=>{
-        if(p.position < FINISH) return;
+    // Only award points to finishers
+    if(!finishOrder.find(f => f.id === p.id)) return;
 
         if(i===0) p.points += 15;
             else if(i===1) p.points += 12;
