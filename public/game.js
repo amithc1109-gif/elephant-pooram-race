@@ -23,11 +23,15 @@ lastTouchEnd = now;
 window.onload = () => {
 
     let betSection = document.getElementById("betSection");
-
+    let betBtn = document.getElementById("betBtn");
+   
     if(role === "spectator"){
-        betSection.style.display = "block";
+        if(betSection) betSection.style.display = "block";
     } else {
-        betSection.style.display = "none";
+        if(betSection) betSection.style.display = "none";
+
+        // 🔥 HIDE BET BUTTON FOR NON-SPECTATORS
+        if(betBtn) betBtn.style.display = "none";
     }
 
 };
@@ -87,7 +91,7 @@ socket.on("players",(data)=>{
 // Show Bet Section
 let betSection = document.getElementById("betSection");
 if(betSection){
-    betSection.style.display = "block"
+    betSection.style.display = (role === "spectator") ? "block" : "none";
 }
 
 });
@@ -383,7 +387,9 @@ socket.on("raceReset", () => {
     // ✅ allow betting again
     let betSection = document.getElementById("betSection");
     if(betSection){
-        betSection.style.display = "block";
+      if(role === "spectator"){
+         betSection.style.display = "block";
+        }
     }
 
     let liveTable = document.getElementById("liveBetsTable");
