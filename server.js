@@ -17,6 +17,7 @@ let admin = null;
 let timer = null;
 let timeLeft = 120;
 let bets = [];
+let cumulativeMode = false; // default = single race    
 
 const FINISH = 1200;
 
@@ -176,6 +177,28 @@ io.on("connection", (socket) => {
         io.emit("bets", bets); 
     });
 
+/*====================Tournamant/ Single Race============*/
+socket.on("setMode", (mode) => {
+
+    if(socket.id !== admin) return;
+
+    cumulativeMode = mode === "tournament";
+
+    console.log("🎮 Mode:", cumulativeMode ? "Tournament" : "Race");
+
+    // 🔥 STEP 6 LOGIC HERE
+    if(!cumulativeMode){
+        // Switching to Race Mode → reset points
+        players.forEach(p => {
+            p.points = 0;
+        });
+
+        io.emit("leaderboard", []); // clear leaderboard UI
+    }
+
+    io.emit("modeUpdate", cumulativeMode);
+});
+
     /* ================= RESET RACE ================= */
 
     socket.on("resetRace", () => {
@@ -193,7 +216,11 @@ io.on("connection", (socket) => {
 
         players.forEach(p=>{
             p.position = 0;
-        });
+    // 🔥 ONLY RESET IF NOT CUMULATIVE MODE
+    if(!cumulativeMode){
+        p.points = 0;
+        }
+    });
 
         bets = [];
         io.emit("positions", players);
