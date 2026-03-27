@@ -256,18 +256,27 @@ sorted = [...sorted, ...remaining];
 
     /* 🔥 MATCH USING ELEPHANT NAME */
 
-    let winnerElephant = sorted[0]?.name?.trim();
+/* 🔥 DETERMINE WINNER CORRECTLY */
 
-    console.log("🏆 Winning Elephant:", winnerElephant);
+let winnerElephant;
 
-    let winners = bets.filter(b => {
-        return b.choice?.trim() === winnerElephant;
-    });
+if(finishOrder.length > 0){
+    winnerElephant = finishOrder[0].name.trim();
+} else {
+    let topPlayer = [...players].sort((a,b)=>b.position - a.position)[0];
+    winnerElephant = topPlayer?.name?.trim();
+}
 
-    console.log("🎯 Bet Winners:", winners);
+const normalize = (str) => str?.trim();
 
-    io.emit("betResults", winners);
+let winners = bets.filter(b => 
+    normalize(b.choice) === normalize(winnerElephant)
+);
 
+console.log("🏆 Winning Elephant:", winnerElephant);
+console.log("🎯 Bet Winners:", winners);
+
+io.emit("betResults", winners);
     bets = [];
 }
     /* ================= DISCONNECT ================= */
