@@ -230,8 +230,15 @@ io.on("connection", (socket) => {
         if(p.position < FINISH) return;
 
         if(i===0) p.points += 15;
-        else if(i===1) p.points += 12;
-        else if(i===2) p.points += 10;
+            else if(i===1) p.points += 12;
+            else if(i===2) p.points += 10;
+            else if(i===3) p.points += 8;
+            else if(i===4) p.points += 7;
+            else if(i===5) p.points += 6;
+            else if(i===6) p.points += 5;
+            else if(i===7) p.points += 4;
+            else if(i===8) p.points += 2;
+            else if(i===9) p.points += 1;
     });
 
     io.emit("leaderboard", sorted);
